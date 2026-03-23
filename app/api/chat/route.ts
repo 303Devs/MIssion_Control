@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export async function POST(request: NextRequest) {
   try {
     const { message } = await request.json();
 
-    if (!message) {
+    if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'No message provided' }, { status: 400 });
     }
 
-    // Use the openclaw CLI to send a system event
-    const escapedMessage = message.replace(/'/g, "'\\''");
-    const { stdout, stderr } = await execAsync(
-      `openclaw system event --text '[Mission Control] ${escapedMessage}' --mode now`,
+    // Use execFile with array args to prevent shell injection
+    const { stdout, stderr } = await execFileAsync(
+      'openclaw',
+      ['system', 'event', '--text', `[Mission Control] ${message}`, '--mode', 'now'],
       { timeout: 10000 }
     );
 

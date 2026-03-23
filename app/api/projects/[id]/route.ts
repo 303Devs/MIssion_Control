@@ -12,7 +12,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const projectPath = path.join(PROJECTS_DIR, id);
+  const projectPath = path.resolve(PROJECTS_DIR, id);
+
+  // Prevent path traversal
+  if (!projectPath.startsWith(PROJECTS_DIR)) {
+    return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
+  }
 
   if (!fs.existsSync(projectPath)) {
     return NextResponse.json({ error: 'Project not found' }, { status: 404 });
