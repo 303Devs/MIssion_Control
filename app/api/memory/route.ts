@@ -25,8 +25,8 @@ export async function GET(req: NextRequest) {
   // Read specific file
   if (file) {
     try {
-      const filePath = path.join(MEMORY_DIR, file);
-      // Prevent path traversal
+      const filePath = path.resolve(MEMORY_DIR, file);
+      // Prevent path traversal (resolve normalizes ../ sequences)
       if (!filePath.startsWith(MEMORY_DIR)) {
         return NextResponse.json({ error: "Invalid path" }, { status: 400 });
       }

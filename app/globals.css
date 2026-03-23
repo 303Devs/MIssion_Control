@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-fade-in: fadeIn 0.3s ease-in-out;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes statusPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: #030712;
+  color: #f9fafb;
+  font-family: system-ui, -apple-system, sans-serif;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #111827;
+}
+::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+/* Markdown content styles */
+.prose-dark {
+  color: #d1d5db;
+}
+.prose-dark h1, .prose-dark h2, .prose-dark h3, .prose-dark h4 {
+  color: #f9fafb;
+  font-weight: 600;
+}
+.prose-dark h1 { font-size: 1.5rem; margin: 1rem 0 0.5rem; }
+.prose-dark h2 { font-size: 1.25rem; margin: 0.875rem 0 0.4rem; }
+.prose-dark h3 { font-size: 1.1rem; margin: 0.75rem 0 0.35rem; }
+.prose-dark p { margin: 0.5rem 0; line-height: 1.7; }
+.prose-dark ul, .prose-dark ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+.prose-dark li { margin: 0.25rem 0; }
+.prose-dark code {
+  background: #1f2937;
+  color: #34d399;
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.875em;
+}
+.prose-dark pre {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 0.75rem 0;
+}
+.prose-dark pre code {
+  background: none;
+  padding: 0;
+  color: #e5e7eb;
+}
+.prose-dark blockquote {
+  border-left: 3px solid #10b981;
+  padding-left: 1rem;
+  color: #9ca3af;
+  margin: 0.75rem 0;
+}
+.prose-dark a {
+  color: #34d399;
+  text-decoration: underline;
+}
+.prose-dark hr {
+  border-color: #374151;
+  margin: 1rem 0;
+}
+.prose-dark table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.prose-dark th, .prose-dark td {
+  border: 1px solid #374151;
+  padding: 0.5rem 0.75rem;
+}
+.prose-dark th {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+.status-pulse {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}

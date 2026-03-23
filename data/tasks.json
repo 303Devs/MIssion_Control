@@ -1,0 +1,94 @@
+{
+  "tasks": [
+    {
+      "id": "task-1",
+      "title": "Set up Mission Control dashboard",
+      "description": "Build the full Next.js dashboard with all screens",
+      "status": "done",
+      "priority": "high",
+      "project": "mission-control",
+      "assignee": "bob",
+      "createdAt": "2026-03-20T10:00:00Z",
+      "updatedAt": "2026-03-22T08:00:00Z",
+      "tags": [
+        "infrastructure",
+        "ui"
+      ]
+    },
+    {
+      "id": "task-2",
+      "title": "Integrate calctl calendar feed",
+      "description": "Pull Apple Calendar events via calctl CLI",
+      "status": "in-progress",
+      "priority": "medium",
+      "project": "mission-control",
+      "assignee": "bob",
+      "createdAt": "2026-03-21T09:00:00Z",
+      "updatedAt": "2026-03-22T09:00:00Z",
+      "tags": [
+        "integration",
+        "calendar"
+      ]
+    },
+    {
+      "id": "task-3",
+      "title": "Build agent memory browser",
+      "description": "Browse and search daily memory files with markdown rendering",
+      "status": "in-progress",
+      "priority": "high",
+      "project": "mission-control",
+      "assignee": "bob",
+      "createdAt": "2026-03-21T11:00:00Z",
+      "updatedAt": "2026-03-22T10:00:00Z",
+      "tags": [
+        "memory",
+        "ui"
+      ]
+    },
+    {
+      "id": "task-4",
+      "title": "Canvas iCal deadline parser",
+      "description": "Parse Canvas course deadlines and display in dashboard",
+      "status": "review",
+      "priority": "high",
+      "project": "coursework",
+      "assignee": "bob",
+      "createdAt": "2026-03-20T14:00:00Z",
+      "updatedAt": "2026-03-22T07:00:00Z",
+      "tags": [
+        "canvas",
+        "school"
+      ]
+    },
+    {
+      "id": "task-5",
+      "title": "Office 2D pixel art visualization",
+      "description": "Create animated pixel art office with agent status",
+      "status": "done",
+      "priority": "low",
+      "project": "mission-control",
+      "assignee": "bob",
+      "createdAt": "2026-03-22T08:00:00Z",
+      "updatedAt": "2026-03-23T02:27:59.540Z",
+      "tags": [
+        "ui",
+        "fun"
+      ]
+    },
+    {
+      "id": "task-6",
+      "title": "Research LLM context window strategies",
+      "description": "Evaluate approaches for long-context agent workflows",
+      "status": "backlog",
+      "priority": "medium",
+      "project": "research",
+      "assignee": "bob",
+      "createdAt": "2026-03-22T09:00:00Z",
+      "updatedAt": "2026-03-22T09:00:00Z",
+      "tags": [
+        "research",
+        "llm"
+      ]
+    }
+  ]
+}
