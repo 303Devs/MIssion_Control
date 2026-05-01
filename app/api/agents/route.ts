@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
+import { execFile, execSync } from "child_process";
+import { promisify } from "util";
 import { OPENCLAW_CRON_FILE, OPENCLAW_SESSIONS_FILE } from "@/lib/agent-paths";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,8 @@ const AGENTS_FILE = path.join(process.cwd(), "data", "agents.json");
 const HISTORY_FILE = path.join(process.cwd(), "data", "agent-history.json");
 const SESSIONS_FILE = OPENCLAW_SESSIONS_FILE;
 const CRON_JOBS_FILE = OPENCLAW_CRON_FILE;
-const GATEWAY_URL = "http://127.0.0.1:18789";
+const execFileAsync = promisify(execFile);
+const GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL || "http://127.0.0.1:18789";
 const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN || "";
 
 // 15 minutes — if an agent's most recent session was updated within this window, they're "active"
@@ -118,9 +120,13 @@ function runCmd(cmd: string): string {
   }
 }
 
+function gatewayHttpUrl() {
+  return GATEWAY_URL.replace(/^wss:/, "https:").replace(/^ws:/, "http:").replace(/\/$/, "");
+}
+
 async function checkGatewayHealth(): Promise<boolean> {
   try {
-    const res = await fetch(`${GATEWAY_URL}/health`, {
+    const res = await fetch(`${gatewayHttpUrl()}/health`, {
       headers: GATEWAY_TOKEN ? { Authorization: `Bearer ${GATEWAY_TOKEN}` } : {},
       signal: AbortSignal.timeout(3000),
       cache: "no-store",
@@ -557,6 +563,42 @@ export async function GET() {
     } catch {
       return NextResponse.json({ agents: [], gateway: { healthy: false } });
     }
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const agentId = typeof body.agentId === "string" ? body.agentId.trim() : "";
+    const message = typeof body.message === "string" ? body.message.trim() : "";
+
+    if (!agentId) return NextResponse.json({ error: "agentId is required" }, { status: 400 });
+    if (!message) return NextResponse.json({ error: "message is required" }, { status: 400 });
+
+    const text = `[Mission Control Ping → ${agentId}] ${message}`;
+    const { stderr } = await execFileAsync(
+      "openclaw",
+      ["system", "event", "--text", text, "--mode", "now", "--json"],
+      {
+        timeout: 15000,
+        env: {
+          ...process.env,
+          OPENCLAW_GATEWAY_URL: GATEWAY_URL,
+          OPENCLAW_GATEWAY_TOKEN: GATEWAY_TOKEN,
+        },
+      }
+    );
+
+    if (stderr && !stderr.includes("Doctor warnings")) {
+      return NextResponse.json({ ok: false, error: stderr }, { status: 502 });
+    }
+
+    return NextResponse.json({ ok: true, agentId });
+  } catch (err) {
+    return NextResponse.json(
+      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    );
   }
 }
 

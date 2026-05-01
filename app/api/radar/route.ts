@@ -2,41 +2,65 @@ import fs from "fs";
 import path from "path";
 import { spawnSync } from "child_process";
 import { NextResponse } from "next/server";
-import { OPENCLAW_CRON_FILE, OPENCLAW_SESSIONS_FILE, OPENCLAW_WORKSPACE } from "@/lib/agent-paths";
+import { OPENCLAW_CRON_FILE, OPENCLAW_SESSIONS_FILE } from "@/lib/agent-paths";
 
 export const dynamic = "force-dynamic";
 
 const HOME = process.env.HOME || "/Users/anthony";
 const PROJECTS_DIR = path.join(HOME, "Projects");
-const WORKSPACE = OPENCLAW_WORKSPACE;
 const SESSIONS_FILE = OPENCLAW_SESSIONS_FILE;
 const CRON_FILE = OPENCLAW_CRON_FILE;
+const MAX_PROJECTS = 25;
+const COMMITS_PER_PROJECT = 5;
 
 export interface RadarEvent {
   id: string;
   timestamp: number;
-  type: "commit" | "file" | "agent" | "cron";
+  type: "commit" | "agent" | "cron";
   title: string;
   detail: string;
   source: string;
   repo?: string;
+  model?: string;
+  modelProvider?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  durationMs?: number;
+}
+
+function getGitRepos(): string[] {
+  try {
+    return fs
+      .readdirSync(PROJECTS_DIR, { withFileTypes: true })
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => entry.name)
+      .filter((dir) => fs.existsSync(path.join(PROJECTS_DIR, dir, ".git")))
+      .sort((a, b) => {
+        const aMtime = fs.statSync(path.join(PROJECTS_DIR, a)).mtimeMs;
+        const bMtime = fs.statSync(path.join(PROJECTS_DIR, b)).mtimeMs;
+        return bMtime - aMtime;
+      })
+      .slice(0, MAX_PROJECTS);
+  } catch {
+    return [];
+  }
 }
 
 function getGitCommits(): RadarEvent[] {
   const events: RadarEvent[] = [];
-  let dirs: string[] = [];
 
-  try {
-    dirs = fs.readdirSync(PROJECTS_DIR).slice(0, 15);
-  } catch {
-    return events;
-  }
-
-  for (const dir of dirs) {
+  for (const dir of getGitRepos()) {
     const repoPath = path.join(PROJECTS_DIR, dir);
     const result = spawnSync(
       "git",
-      ["-C", repoPath, "log", "--oneline", "-n", "15", "--since=14 days ago", "--format=%H|%at|%an|%s"],
+      [
+        "-C",
+        repoPath,
+        "log",
+        `-n${COMMITS_PER_PROJECT}`,
+        "--format=%H|%at|%an|%s",
+      ],
       { timeout: 4000, encoding: "utf-8" }
     );
     if (result.status !== 0 || !result.stdout) continue;
@@ -50,7 +74,7 @@ function getGitCommits(): RadarEvent[] {
           timestamp: tsNum * 1000,
           type: "commit",
           title: msgParts.join("|") || "Commit",
-          detail: `by ${author} in ${dir}`,
+          detail: `${hash.slice(0, 7)} by ${author || "unknown"} in ${dir}`,
           source: dir,
           repo: dir,
         });
@@ -67,13 +91,28 @@ interface SessionEntry {
   origin?: { label?: string };
   startedAt?: number;
   updatedAt?: number;
+  endedAt?: number;
+  runtimeMs?: number;
   status?: string;
+  model?: string;
+  modelProvider?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
 }
 
 interface CronJob {
   id?: string;
   name?: string;
   state?: { lastRunAtMs?: number; lastRunStatus?: string };
+}
+
+function getDurationMs(session: SessionEntry) {
+  if (typeof session.runtimeMs === "number" && session.runtimeMs >= 0) return session.runtimeMs;
+  const start = session.startedAt || 0;
+  const end = session.endedAt || session.updatedAt || 0;
+  if (start > 0 && end >= start) return end - start;
+  return undefined;
 }
 
 function getAgentEvents(): RadarEvent[] {
@@ -85,16 +124,25 @@ function getAgentEvents(): RadarEvent[] {
     for (const [key, session] of Object.entries(sessions)) {
       const label = session.label || session.origin?.label || key;
       const cleanLabel = label.replace(/^Cron:\s*/, "").trim();
-      const ts = session.updatedAt || session.startedAt || 0;
+      const ts = session.endedAt || session.updatedAt || session.startedAt || 0;
       if (ts <= 0) continue;
+
+      const tokenSummary = session.totalTokens ? ` · ${session.totalTokens.toLocaleString()} tokens` : "";
+      const modelSummary = session.model ? ` · ${session.model}` : "";
 
       events.push({
         id: `session-${session.sessionId || key}-${ts}`,
         timestamp: ts,
         type: "agent",
         title: cleanLabel,
-        detail: `Status: ${session.status || "unknown"}`,
+        detail: `Status: ${session.status || "unknown"}${modelSummary}${tokenSummary}`,
         source: "agents",
+        model: session.model,
+        modelProvider: session.modelProvider,
+        inputTokens: session.inputTokens,
+        outputTokens: session.outputTokens,
+        totalTokens: session.totalTokens,
+        durationMs: getDurationMs(session),
       });
     }
   } catch {}
@@ -111,7 +159,8 @@ function getCronEvents(): RadarEvent[] {
     for (const job of data.jobs || []) {
       const ts = job.state?.lastRunAtMs || 0;
       if (ts <= 0) continue;
-      const isErr = (job.state?.lastRunStatus || "").toLowerCase() === "error";
+      const status = (job.state?.lastRunStatus || "").toLowerCase();
+      const isErr = status === "error" || status === "fail" || status === "failed";
       events.push({
         id: `cron-${job.id || job.name}-${ts}`,
         timestamp: ts,
@@ -126,42 +175,14 @@ function getCronEvents(): RadarEvent[] {
   return events;
 }
 
-function getWorkspaceFileEvents(): RadarEvent[] {
-  const events: RadarEvent[] = [];
-  const cutoff = Date.now() - 14 * 24 * 60 * 60 * 1000;
-
-  try {
-    const entries = fs.readdirSync(WORKSPACE, { withFileTypes: true });
-    for (const entry of entries) {
-      if (!entry.isFile()) continue;
-      if (!/\.(md|json|txt)$/.test(entry.name)) continue;
-      try {
-        const st = fs.statSync(path.join(WORKSPACE, entry.name));
-        if (st.mtimeMs < cutoff) continue;
-        events.push({
-          id: `ws-${entry.name}-${st.mtimeMs}`,
-          timestamp: st.mtimeMs,
-          type: "file",
-          title: `${entry.name} updated`,
-          detail: `${Math.round(st.size / 1024)}KB — workspace file`,
-          source: "workspace",
-        });
-      } catch {}
-    }
-  } catch {}
-
-  return events;
-}
-
 export async function GET() {
-  const [commits, agentEvents, cronEvents, fileEvents] = await Promise.all([
+  const [commits, agentEvents, cronEvents] = await Promise.all([
     Promise.resolve(getGitCommits()),
     Promise.resolve(getAgentEvents()),
     Promise.resolve(getCronEvents()),
-    Promise.resolve(getWorkspaceFileEvents()),
   ]);
 
-  const events = [...commits, ...agentEvents, ...cronEvents, ...fileEvents]
+  const events = [...commits, ...agentEvents, ...cronEvents]
     .filter((e) => Number.isFinite(e.timestamp) && e.timestamp > 0)
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, 80);
