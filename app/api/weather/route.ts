@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 
-// Defaults keep local development usable; production should set WEATHER_LAT/WEATHER_LON.
-const LAT = Number(process.env.WEATHER_LAT || "40.015");
-const LON = Number(process.env.WEATHER_LON || "-105.2705");
+const LAT = process.env.WEATHER_LAT ? Number(process.env.WEATHER_LAT) : null;
+const LON = process.env.WEATHER_LON ? Number(process.env.WEATHER_LON) : null;
 
 export async function GET() {
+  if (LAT === null || LON === null) {
+    return NextResponse.json({ error: "WEATHER_LAT and WEATHER_LON must be set in .env.local" }, { status: 500 });
+  }
+
   try {
     const res = await fetch(
       `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,weathercode,windspeed_10m,relative_humidity_2m&temperature_unit=fahrenheit&windspeed_unit=mph&timezone=America%2FDenver`,
