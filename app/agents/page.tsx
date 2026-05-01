@@ -1,7 +1,7 @@
 "use client";
 
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
-import { Activity, CheckSquare, Clock, Cpu, RefreshCw, Zap } from "lucide-react";
+import { Activity, CheckSquare, Clock, Cpu, RefreshCw, Zap, Radio } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -77,17 +77,56 @@ function formatRelativeTime(isoString: string | null): string {
 
 function AgentCard({ agent }: { agent: Agent }) {
   const style = STATUS_STYLES[agent.status] || STATUS_STYLES.idle;
+  const isActive = agent.status === "active";
+  const [pingState, setPingState] = useState<"idle" | "pinging" | "ok" | "err">("idle");
+  const [pingFeedback, setPingFeedback] = useState("");
+
+  const handlePing = async () => {
+    if (pingState === "pinging") return;
+    setPingState("pinging");
+    try {
+      const res = await fetch("/api/agents", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId: agent.id, message: "Ping from Mission Control." }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setPingState("ok");
+        setPingFeedback("Sent ✓");
+      } else {
+        setPingState("err");
+        setPingFeedback(data.error ? data.error.slice(0, 40) : "Failed");
+      }
+    } catch {
+      setPingState("err");
+      setPingFeedback("Network error");
+    }
+    setTimeout(() => { setPingState("idle"); setPingFeedback(""); }, 3000);
+  };
 
   return (
-    <div className={`bg-gray-900 border rounded-xl p-5 transition-all hover:shadow-lg hover:shadow-black/30 ${
+    <div className={`bg-gray-900 border rounded-xl p-5 transition-all hover:shadow-lg hover:shadow-black/30 relative overflow-hidden ${
       agent.isOrchestrator ? "border-emerald-500/30 hover:border-emerald-500/50" : "border-gray-800 hover:border-gray-700"
     }`}>
-      {agent.isOrchestrator && (
-        <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400 mb-3">
-          <Zap className="w-3 h-3" />
-          Orchestrator
-        </div>
+      {/* Active progress bar */}
+      {isActive && (
+        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-400 to-emerald-500/0 animate-pulse" />
       )}
+      <div className="flex items-center gap-2 mb-3">
+        {agent.isOrchestrator && (
+          <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-400">
+            <Zap className="w-3 h-3" />
+            Orchestrator
+          </div>
+        )}
+        {isActive && (
+          <div className="flex items-center gap-1 text-xs font-medium text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+            <Radio className="w-3 h-3" />
+            In Progress
+          </div>
+        )}
+      </div>
 
       <div className="flex items-start gap-4">
         <div className={`text-4xl shrink-0`}>{agent.avatar}</div>
@@ -142,6 +181,28 @@ function AgentCard({ agent }: { agent: Agent }) {
           <div className="text-xs text-gray-600 mb-0.5">Tasks Done</div>
           <div className="text-xs font-bold text-white">{agent.tasksCompleted}</div>
         </div>
+      </div>
+
+      {/* Ping button */}
+      <div className="mt-3 flex items-center justify-end">
+        {pingFeedback && (
+          <span className={`text-xs mr-2 ${pingState === "ok" ? "text-emerald-400" : "text-red-400"}`}>
+            {pingFeedback}
+          </span>
+        )}
+        <button
+          onClick={handlePing}
+          disabled={pingState === "pinging"}
+          className={`text-xs px-2.5 py-1 rounded-lg border transition-colors ${
+            pingState === "ok"
+              ? "border-emerald-500/30 text-emerald-400 bg-emerald-500/10"
+              : pingState === "err"
+              ? "border-red-500/30 text-red-400 bg-red-500/10"
+              : "border-gray-700 text-gray-500 hover:text-gray-300 hover:border-gray-600 bg-gray-800/50 disabled:opacity-50"
+          }`}
+        >
+          {pingState === "pinging" ? "Pinging…" : "Ping"}
+        </button>
       </div>
     </div>
   );

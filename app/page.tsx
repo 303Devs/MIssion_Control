@@ -1,7 +1,8 @@
 "use client";
 
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
-import { Bot, CheckSquare, Clock, Calendar, AlertCircle, Activity, Zap, TrendingUp, AlertTriangle } from "lucide-react";
+import { Bot, CheckSquare, Clock, Calendar, AlertCircle, Activity, Zap, TrendingUp, AlertTriangle, MessageCircle, X, ChevronRight } from "lucide-react";
+import ChatPanel from "@/components/ChatPanel";
 
 interface WeatherData {
   temp: number | null;
@@ -40,7 +41,25 @@ interface CronJob {
   command?: string;
   enabled?: boolean;
   lastRun?: string;
+  lastRunResult?: "success" | "fail" | "unknown";
+  lastRunStatus?: string | null;
+  nextRunLabel?: string | null;
+  nextRunCountdownSeconds?: number | null;
   state?: { lastRunStatus?: string; lastDurationMs?: number };
+}
+
+interface ActivityEvent {
+  id: string;
+  timestamp: number;
+  type: "spawn" | "done" | "error" | "cron";
+  text: string;
+  source: "session" | "cron";
+  model?: string;
+  modelProvider?: string;
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  durationMs?: number;
 }
 
 function getCronExpr(schedule: CronJob["schedule"]): string {
@@ -168,12 +187,22 @@ function isDueSoon(iso: string): boolean {
   } catch { return false; }
 }
 
+function formatDuration(ms?: number): string {
+  if (!ms || ms <= 0) return "";
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(1)}s`;
+  return `${Math.floor(ms / 60000)}m ${Math.round((ms % 60000) / 1000)}s`;
+}
+
 function DashboardContent() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [calEvents, setCalEvents] = useState<CalEvent[]>([]);
   const [canvasEvents, setCanvasEvents] = useState<CanvasEvent[]>([]);
   const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
+  const [activityEvents, setActivityEvents] = useState<ActivityEvent[]>([]);
+  const [selectedEvent, setSelectedEvent] = useState<ActivityEvent | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -183,12 +212,14 @@ function DashboardContent() {
       fetch("/api/canvas").then((r) => r.json()).catch(() => ({ events: [] })),
       fetch("/api/cron").then((r) => r.json()).catch(() => ({ jobs: [] })),
       fetch("/api/agents").then((r) => r.json()).catch(() => ({ agents: [] })),
-    ]).then(([w, cal, canvas, cron, ag]) => {
+      fetch("/api/activity").then((r) => r.json()).catch(() => ({ events: [] })),
+    ]).then(([w, cal, canvas, cron, ag, act]) => {
       setWeather(w);
       setCalEvents(cal.events || []);
       setCanvasEvents((canvas.events || []).slice(0, 6));
       setCronJobs(cron.jobs || []);
       setAgents(ag.agents || []);
+      setActivityEvents(act.events || []);
       setLoading(false);
     });
   }, []);
@@ -207,20 +238,34 @@ function DashboardContent() {
           </div>
           <Clock24 />
         </div>
-        {/* Weather */}
-        {weather && (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-right min-w-[160px]">
-            <div className="text-3xl">{weather.icon}</div>
-            <div className="text-2xl font-bold text-white">
-              {weather.temp !== null ? `${weather.temp}°F` : "—"}
+        <div className="flex items-start gap-3">
+          {/* Chat toggle */}
+          <button
+            onClick={() => setChatOpen((o) => !o)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+              chatOpen
+                ? "bg-emerald-600 border-emerald-500 text-white"
+                : "bg-gray-900 border-gray-700 text-gray-400 hover:text-gray-200 hover:border-gray-600"
+            }`}
+          >
+            <MessageCircle className="w-4 h-4" />
+            Bob
+          </button>
+          {/* Weather */}
+          {weather && (
+            <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 text-right min-w-[160px]">
+              <div className="text-3xl">{weather.icon}</div>
+              <div className="text-2xl font-bold text-white">
+                {weather.temp !== null ? `${weather.temp}°F` : "—"}
+              </div>
+              <div className="text-sm text-gray-400">{weather.condition}</div>
+              <div className="text-xs text-gray-500 mt-1">{weather.location}</div>
+              {weather.wind !== null && (
+                <div className="text-xs text-gray-500">Wind {weather.wind} mph · {weather.humidity}% humidity</div>
+              )}
             </div>
-            <div className="text-sm text-gray-400">{weather.condition}</div>
-            <div className="text-xs text-gray-500 mt-1">{weather.location}</div>
-            {weather.wind !== null && (
-              <div className="text-xs text-gray-500">Wind {weather.wind} mph · {weather.humidity}% humidity</div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Stats row */}
@@ -385,18 +430,138 @@ function DashboardContent() {
             <h2 className="text-sm font-semibold text-white">Active Cron Jobs</h2>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {cronJobs.slice(0, 8).map((job, i) => (
-              <div key={job.id || i} className="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
-                <div className={`w-2 h-2 rounded-full shrink-0 ${job.enabled !== false ? "bg-purple-400 status-pulse" : "bg-gray-600"}`} />
-                <div className="min-w-0">
-                  <div className="text-sm text-white font-medium truncate">{job.name || job.command || `Job ${i + 1}`}</div>
-                  {getCronExpr(job.schedule) && <div className="text-xs text-purple-400 font-mono">{getCronExpr(job.schedule)}</div>}
+            {cronJobs.slice(0, 8).map((job, i) => {
+              const result = job.lastRunResult;
+              const resultIcon = result === "success" ? "✅" : result === "fail" ? "❌" : result === "unknown" ? "❓" : null;
+              return (
+                <div key={job.id || i} className="flex items-start gap-3 p-3 bg-gray-800/50 rounded-lg">
+                  <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${job.enabled !== false ? "bg-purple-400 status-pulse" : "bg-gray-600"}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-white font-medium truncate">{job.name || job.command || `Job ${i + 1}`}</span>
+                      {resultIcon && <span className="text-xs shrink-0">{resultIcon}</span>}
+                    </div>
+                    {getCronExpr(job.schedule) && <div className="text-xs text-purple-400 font-mono">{getCronExpr(job.schedule)}</div>}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      {job.nextRunLabel && (
+                        <span className="text-xs text-gray-500">⏰ {job.nextRunLabel}</span>
+                      )}
+                      {job.lastRunStatus && (
+                        <span className={`text-xs ${
+                          result === "fail" ? "text-red-400" : result === "success" ? "text-emerald-400" : "text-gray-600"
+                        }`}>{job.lastRunStatus}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
+
+      {/* Activity Feed */}
+      {!loading && activityEvents.length > 0 && (
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-4 h-4 text-blue-400" />
+            <h2 className="text-sm font-semibold text-white">Recent Activity</h2>
+            <span className="ml-auto text-xs text-gray-600">{activityEvents.length} events</span>
+          </div>
+          <div className="space-y-1.5">
+            {activityEvents.slice(0, 10).map((ev) => {
+              const typeColors: Record<string, string> = {
+                spawn: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+                done: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+                error: "text-red-400 bg-red-500/10 border-red-500/20",
+                cron: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+              };
+              const typeLabels: Record<string, string> = {
+                spawn: "started",
+                done: "done",
+                error: "error",
+                cron: "cron",
+              };
+              return (
+                <button
+                  key={ev.id}
+                  onClick={() => setSelectedEvent(selectedEvent?.id === ev.id ? null : ev)}
+                  className="w-full flex items-center gap-3 p-2.5 bg-gray-800/40 hover:bg-gray-800 rounded-lg text-left transition-colors group"
+                >
+                  <span className={`text-xs px-1.5 py-0.5 rounded border font-medium shrink-0 ${typeColors[ev.type] || "text-gray-400 bg-gray-800 border-gray-700"}`}>
+                    {typeLabels[ev.type] || ev.type}
+                  </span>
+                  <span className="text-sm text-gray-300 truncate flex-1">{ev.text}</span>
+                  <span className="text-xs text-gray-600 shrink-0">
+                    {new Date(ev.timestamp).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                  </span>
+                  <ChevronRight className={`w-3.5 h-3.5 shrink-0 text-gray-600 group-hover:text-gray-400 transition-transform ${
+                    selectedEvent?.id === ev.id ? "rotate-90" : ""
+                  }`} />
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Session detail panel */}
+          {selectedEvent && (
+            <div className="mt-3 p-4 bg-gray-800/70 border border-gray-700 rounded-xl">
+              <div className="flex items-start justify-between mb-3">
+                <div>
+                  <div className="text-sm font-semibold text-white">{selectedEvent.text}</div>
+                  <div className="text-xs text-gray-500 mt-0.5">
+                    {new Date(selectedEvent.timestamp).toLocaleString()}
+                  </div>
+                </div>
+                <button onClick={() => setSelectedEvent(null)} className="text-gray-500 hover:text-gray-300 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                {selectedEvent.model && (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-0.5">Model</div>
+                    <div className="text-xs font-mono text-blue-400">{selectedEvent.model}</div>
+                  </div>
+                )}
+                {selectedEvent.durationMs !== undefined && selectedEvent.durationMs > 0 && (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-0.5">Duration</div>
+                    <div className="text-xs font-mono text-gray-300">{formatDuration(selectedEvent.durationMs)}</div>
+                  </div>
+                )}
+                {selectedEvent.inputTokens !== undefined && (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-0.5">Input Tokens</div>
+                    <div className="text-xs font-mono text-gray-300">{selectedEvent.inputTokens?.toLocaleString() ?? "—"}</div>
+                  </div>
+                )}
+                {selectedEvent.outputTokens !== undefined && (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-0.5">Output Tokens</div>
+                    <div className="text-xs font-mono text-gray-300">{selectedEvent.outputTokens?.toLocaleString() ?? "—"}</div>
+                  </div>
+                )}
+                {selectedEvent.totalTokens !== undefined && (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-0.5">Total Tokens</div>
+                    <div className="text-xs font-bold text-emerald-400">{selectedEvent.totalTokens?.toLocaleString() ?? "—"}</div>
+                  </div>
+                )}
+                {selectedEvent.modelProvider && (
+                  <div>
+                    <div className="text-xs text-gray-600 mb-0.5">Provider</div>
+                    <div className="text-xs text-gray-400">{selectedEvent.modelProvider}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Chat Panel */}
+      <ChatPanel isOpen={chatOpen} onClose={() => setChatOpen(false)} />
     </div>
   );
 }
