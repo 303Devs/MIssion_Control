@@ -14,10 +14,11 @@ interface Agent {
   capabilities: string[];
   avatar: string;
   color: string;
-  uptime: string;
+  activeSince: string;
   tasksCompleted: number;
   isOrchestrator: boolean;
   reports: string[];
+  lastActive: string | null;
 }
 
 const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
@@ -32,6 +33,18 @@ const MODEL_COLORS: Record<string, string> = {
   "claude-sonnet-4-6": "text-blue-400",
   "claude-haiku-4-5-20251001": "text-cyan-400",
 };
+
+function formatRelativeTime(isoString: string | null): string {
+  if (!isoString) return "never";
+  const ms = Date.now() - new Date(isoString).getTime();
+  if (ms < 60_000) return "just now";
+  const minutes = Math.floor(ms / 60_000);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 function AgentCard({ agent }: { agent: Agent }) {
   const style = STATUS_STYLES[agent.status] || STATUS_STYLES.idle;
@@ -79,6 +92,11 @@ function AgentCard({ agent }: { agent: Agent }) {
         ))}
       </div>
 
+      {/* Last active */}
+      <div className="mt-2 text-xs text-gray-600">
+        Last active: {formatRelativeTime(agent.lastActive)}
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3 mt-4 pt-4 border-t border-gray-800">
         <div className="text-center">
@@ -88,8 +106,8 @@ function AgentCard({ agent }: { agent: Agent }) {
           </div>
         </div>
         <div className="text-center">
-          <div className="text-xs text-gray-600 mb-0.5">Uptime</div>
-          <div className="text-xs font-mono text-emerald-400 font-medium">{agent.uptime}</div>
+          <div className="text-xs text-gray-600 mb-0.5">Active Since</div>
+          <div className="text-xs font-mono text-emerald-400 font-medium">{agent.activeSince || "never"}</div>
         </div>
         <div className="text-center">
           <div className="text-xs text-gray-600 mb-0.5">Tasks Done</div>
@@ -114,7 +132,27 @@ export default function AgentsPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { loadAgents(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+
+    const poll = async () => {
+      const res = await fetch("/api/agents");
+      const d = await res.json();
+      if (cancelled) return;
+      setAgents(d.agents || []);
+      setLoading(false);
+      setRefreshing(false);
+    };
+
+    void poll();
+
+    const intervalId = setInterval(() => { void poll(); }, 15_000);
+
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const active = agents.filter((a) => a.status === "active").length;
   const idle = agents.filter((a) => a.status === "idle").length;

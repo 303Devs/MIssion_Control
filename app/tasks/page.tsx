@@ -205,7 +205,24 @@ export default function TasksPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { loadTasks(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+
+    const initialLoad = async () => {
+      const res = await fetch("/api/tasks");
+      const d = await res.json();
+      if (cancelled) return;
+      setTasks(d.tasks || []);
+      setLoading(false);
+      setRefreshing(false);
+    };
+
+    void initialLoad();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleAdd = async (partial: Partial<Task>) => {
     const res = await fetch("/api/tasks", {

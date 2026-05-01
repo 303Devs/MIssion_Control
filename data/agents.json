@@ -5,9 +5,8 @@
       "name": "Bob",
       "role": "Orchestrator",
       "description": "Lead AI orchestrator. Plans and coordinates all agent workflows, manages task delegation, monitors system health. The brain of the operation.",
-      "status": "active",
-      "currentTask": "Orchestrating overnight PNP pipeline",
-      "model": "claude-opus-4-6",
+      "status": "idle",
+      "model": "claude-sonnet-4-6",
       "capabilities": [
         "orchestration",
         "planning",
@@ -15,10 +14,8 @@
         "research",
         "writing"
       ],
-      "avatar": "\ud83e\udec8",
+      "avatar": "🫈",
       "color": "emerald",
-      "uptime": "99.2%",
-      "tasksCompleted": 147,
       "isOrchestrator": true,
       "reports": [
         "clint-drifter",
@@ -28,13 +25,12 @@
       ]
     },
     {
-      "id": "clint-drifter",
-      "name": "Clint Drifter",
+      "id": "gilfoyle",
+      "name": "Gilfoyle",
       "role": "Lead Software Engineer",
       "description": "Lead engineer. Writes, builds, and ships code across JS/TS, Python, C++, and beyond. Manages Squeak and Richard. The hands that build.",
       "status": "active",
-      "currentTask": "Writing PNP ERC-721 smart contract for Base",
-      "model": "claude-sonnet-4-6",
+      "model": "claude-opus-4-7",
       "capabilities": [
         "typescript",
         "javascript",
@@ -44,10 +40,8 @@
         "debugging",
         "refactoring"
       ],
-      "avatar": "\ud83d\udcbb",
+      "avatar": "💻",
       "color": "blue",
-      "uptime": "97.8%",
-      "tasksCompleted": 89,
       "isOrchestrator": false,
       "reports": [
         "squeak",
@@ -59,10 +53,9 @@
       "id": "albert",
       "name": "Albert",
       "role": "QA Manager",
-      "description": "Reviews all code before it ships. Tests, audits, and enforces quality standards. Agents checking agents \u2014 Albert checks everyone's work.",
-      "status": "idle",
-      "currentTask": "Waiting to review PNP smart contract",
-      "model": "claude-sonnet-4-6",
+      "description": "Reviews all code before it ships. Tests, audits, and enforces quality standards. Agents checking agents — Albert checks everyone's work.",
+      "status": "active",
+      "model": "claude-opus-4-7",
       "capabilities": [
         "code-review",
         "testing",
@@ -70,10 +63,8 @@
         "security-audit",
         "standards"
       ],
-      "avatar": "\ud83d\udd0d",
+      "avatar": "🔍",
       "color": "red",
-      "uptime": "98.5%",
-      "tasksCompleted": 72,
       "isOrchestrator": false,
       "reports": []
     },
@@ -83,8 +74,7 @@
       "role": "Research Analyst",
       "description": "Deep research, web search, document synthesis, and knowledge extraction. Produces detailed reports and competitive analysis.",
       "status": "idle",
-      "currentTask": null,
-      "model": "claude-sonnet-4-6",
+      "model": "gemini-3-flash-preview",
       "capabilities": [
         "web-search",
         "summarization",
@@ -92,10 +82,8 @@
         "report-writing",
         "market-research"
       ],
-      "avatar": "\ud83d\udcda",
+      "avatar": "📚",
       "color": "purple",
-      "uptime": "95.1%",
-      "tasksCompleted": 63,
       "isOrchestrator": false,
       "reports": []
     },
@@ -105,7 +93,6 @@
       "role": "Content Strategist",
       "description": "Drafts essays, LinkedIn posts, documentation, emails, and long-form content. Adapts to any voice or style. The voice of the operation.",
       "status": "idle",
-      "currentTask": null,
       "model": "claude-opus-4-6",
       "capabilities": [
         "writing",
@@ -116,10 +103,8 @@
         "linkedin",
         "content-strategy"
       ],
-      "avatar": "\u270d\ufe0f",
+      "avatar": "✍️",
       "color": "yellow",
-      "uptime": "96.4%",
-      "tasksCompleted": 41,
       "isOrchestrator": false,
       "reports": []
     },
@@ -128,8 +113,7 @@
       "name": "Squeak",
       "role": "Frontend Engineer",
       "description": "Frontend and UI specialist. CSS, animations, layout, responsive design, component polish. Makes things look right and feel right.",
-      "status": "active",
-      "currentTask": "PNP trait extraction + metadata JSON generation",
+      "status": "idle",
       "model": "claude-sonnet-4-6",
       "capabilities": [
         "css",
@@ -140,10 +124,8 @@
         "ui-polish",
         "accessibility"
       ],
-      "avatar": "\ud83c\udfa8",
+      "avatar": "🎨",
       "color": "pink",
-      "uptime": "100%",
-      "tasksCompleted": 0,
       "isOrchestrator": false,
       "reports": []
     },
@@ -152,8 +134,7 @@
       "name": "Richard",
       "role": "DevOps Engineer",
       "description": "Deployment, CI/CD, infrastructure, and server configuration. Gets code from laptop to production reliably.",
-      "status": "active",
-      "currentTask": "Building IPFS upload pipeline for PNP",
+      "status": "idle",
       "model": "claude-sonnet-4-6",
       "capabilities": [
         "vercel",
@@ -164,20 +145,17 @@
         "monitoring",
         "environment-config"
       ],
-      "avatar": "\ud83d\udd27",
+      "avatar": "🔧",
       "color": "orange",
-      "uptime": "100%",
-      "tasksCompleted": 0,
       "isOrchestrator": false,
       "reports": []
     },
     {
       "id": "pablo",
       "name": "Pablo",
-      "role": "Image Generator",
+      "role": "Creative Director",
       "description": "Generates and upgrades pixel art using Gemini vision. Handles PNP NFT image upgrades and other visual generation tasks.",
-      "status": "active",
-      "currentTask": "Generating remaining 156 PNP pixel art upgrades",
+      "status": "idle",
       "model": "gemini-3-pro-image",
       "capabilities": [
         "image-generation",
@@ -185,10 +163,8 @@
         "style-transfer",
         "batch-processing"
       ],
-      "avatar": "\ud83c\udfa8",
+      "avatar": "🎨",
       "color": "cyan",
-      "uptime": "100%",
-      "tasksCompleted": 344,
       "isOrchestrator": false,
       "reports": []
     }

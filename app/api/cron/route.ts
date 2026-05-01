@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { OPENCLAW_CRON_FILE } from "@/lib/agent-paths";
 
 export const dynamic = "force-dynamic";
 
-const CRON_FILE = path.join(process.env.HOME || "/Users/anthony", ".openclaw/cron/jobs.json");
+const CRON_FILE = OPENCLAW_CRON_FILE;
 
 function formatNextRun(ms: number | undefined): string | null {
   if (!ms) return null;
-  const d = new Date(ms);
   const now = Date.now();
   const diff = ms - now;
 

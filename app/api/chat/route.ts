@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Use execFile with array args to prevent shell injection
-    const { stdout, stderr } = await execFileAsync(
+    const { stderr } = await execFileAsync(
       'openclaw',
       ['system', 'event', '--text', `[Mission Control] ${message}`, '--mode', 'now'],
       { timeout: 10000 }

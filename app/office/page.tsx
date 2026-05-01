@@ -12,15 +12,6 @@ interface Agent {
   color: string;
 }
 
-// Desk positions in the office grid
-const DESK_POSITIONS: Record<string, { x: number; y: number; rotation?: number }> = {
-  bob: { x: 2, y: 1 },
-  coder: { x: 0, y: 3 },
-  researcher: { x: 2, y: 3 },
-  writer: { x: 4, y: 3 },
-  analyst: { x: 1, y: 5 },
-};
-
 const STATUS_ANIM: Record<string, string> = {
   active: "animate-bounce",
   idle: "",
@@ -34,14 +25,6 @@ const STATUS_GLOW: Record<string, string> = {
   busy: "shadow-yellow-500/40",
   error: "shadow-red-500/40",
 };
-
-const PIXEL_DESK = `
-██████████
-█ ██████ █
-█ ██████ █
-█  ████  █
-██████████
-`;
 
 function PixelDesk({ color }: { color: string }) {
   const colors: Record<string, string> = {
@@ -66,7 +49,6 @@ function PixelDesk({ color }: { color: string }) {
 
 function AgentDesk({ agent }: { agent: Agent }) {
   const [showTooltip, setShowTooltip] = useState(false);
-  const anim = STATUS_ANIM[agent.status] || "";
   const glow = STATUS_GLOW[agent.status] || "";
 
   return (
@@ -77,7 +59,7 @@ function AgentDesk({ agent }: { agent: Agent }) {
     >
       {/* Agent avatar */}
       <div className={`relative text-2xl shadow-lg ${glow} ${agent.status === "active" ? "drop-shadow-[0_0_8px_rgba(16,185,129,0.6)]" : ""}`}>
-        <div className={agent.status === "active" ? "animate-bounce" : ""}>
+        <div className={STATUS_ANIM[agent.status] || ""}>
           {agent.avatar}
         </div>
         {/* Status indicator */}
@@ -151,9 +133,15 @@ export default function OfficePage() {
   const [time, setTime] = useState("");
 
   useEffect(() => {
-    fetch("/api/agents")
-      .then((r) => r.json())
-      .then((d) => { setAgents(d.agents || []); setLoading(false); });
+    const load = () => {
+      fetch("/api/agents")
+        .then((r) => r.json())
+        .then((d) => { setAgents(d.agents || []); setLoading(false); });
+    };
+
+    load();
+    const id = setInterval(load, 15_000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -186,7 +174,7 @@ export default function OfficePage() {
       <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
         {/* Office header / ceiling */}
         <div className="bg-gray-800/50 border-b border-gray-700 px-6 py-2 flex items-center justify-between">
-          <div className="text-xs font-mono text-gray-500 uppercase tracking-widest">// MISSION CONTROL HQ — FLOOR 1</div>
+          <div className="text-xs font-mono text-gray-500 uppercase tracking-widest">{"// MISSION CONTROL HQ - FLOOR 1"}</div>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-red-400" />
             <div className="w-1.5 h-1.5 rounded-full bg-yellow-400" />

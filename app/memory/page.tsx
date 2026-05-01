@@ -1,227 +1,164 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Brain, FileText, ChevronRight, RefreshCw, Search, Calendar, Database } from "lucide-react";
+import { Brain, CalendarDays, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+const CONTENT_SKELETON_WIDTHS = ["82%", "67%", "91%", "73%", "88%", "61%"];
+
 interface MemoryFile {
-  name: string;
-  size: number;
-  mtime: string;
+  date: string;
+  filename: string;
   preview: string;
 }
 
-type Tab = "daily" | "longterm";
-
-function formatDate(filename: string) {
-  // Try to extract date from filename like "2026-03-22.md" or "memory-2026-03-22.md"
-  const match = filename.match(/(\d{4}-\d{2}-\d{2})/);
-  if (match) {
-    const d = new Date(match[1] + "T12:00:00");
-    return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
-  }
-  return filename.replace(/\.(md|txt)$/, "");
-}
-
-function formatFileSize(bytes: number) {
-  if (bytes < 1024) return `${bytes}B`;
-  return `${(bytes / 1024).toFixed(1)}KB`;
-}
-
-function formatRelTime(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  const h = Math.floor(diff / 3600000);
-  const d = Math.floor(diff / 86400000);
-  if (d === 0) return h === 0 ? "today" : `${h}h ago`;
-  if (d === 1) return "yesterday";
-  if (d < 7) return `${d}d ago`;
-  return new Date(iso).toLocaleDateString();
+function formatEntryDate(dateString: string) {
+  const date = new Date(`${dateString}T12:00:00`);
+  return date.toLocaleDateString("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
 }
 
 export default function MemoryPage() {
-  const [tab, setTab] = useState<Tab>("daily");
   const [files, setFiles] = useState<MemoryFile[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
+  const [selected, setSelected] = useState<MemoryFile | null>(null);
   const [content, setContent] = useState("");
-  const [longTermContent, setLongTermContent] = useState("");
+  const [loadedFilename, setLoadedFilename] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
-  const [contentLoading, setContentLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
 
-  const loadMemory = async (selectFirst = false) => {
-    setRefreshing(true);
-    const [daily, lt] = await Promise.all([
-      fetch("/api/memory").then((r) => r.json()),
-      fetch("/api/memory?type=longterm").then((r) => r.json()),
-    ]);
-    const newFiles = daily.files || [];
-    setFiles(newFiles);
-    setLongTermContent(lt.content || "");
-    if (selectFirst && newFiles.length > 0) {
-      setSelected(newFiles[0].name);
-    }
-    setLoading(false);
-    setRefreshing(false);
-  };
-
-  useEffect(() => { loadMemory(true); }, []);
+  useEffect(() => {
+    fetch("/api/memory-files", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        const nextFiles = data.files || [];
+        setFiles(nextFiles);
+        setSelected(nextFiles[0] ?? null);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
     if (!selected) return;
-    setContentLoading(true);
-    fetch(`/api/memory?file=${encodeURIComponent(selected)}`)
-      .then((r) => r.json())
-      .then((d) => { setContent(d.content || ""); setContentLoading(false); });
+
+    fetch(`/api/memory?file=${encodeURIComponent(selected.filename)}`, { cache: "no-store" })
+      .then((response) => response.json())
+      .then((data) => {
+        setContent(data.content || "");
+        setLoadedFilename(selected.filename);
+      });
   }, [selected]);
 
-  const filtered = files.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase()) ||
-    f.preview.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredFiles = files.filter((file) => {
+    const query = search.toLowerCase();
+    return file.date.toLowerCase().includes(query) || file.preview.toLowerCase().includes(query);
+  });
+  const contentLoading = selected ? loadedFilename !== selected.filename : false;
 
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
-      <div className="w-64 bg-gray-900 border-r border-gray-800 flex flex-col shrink-0">
-        {/* Tab toggle + refresh */}
-        <div className="p-3 border-b border-gray-800 flex items-center gap-2">
-          <div className="flex bg-gray-800 rounded-lg p-0.5 border border-gray-700 flex-1">
-            <button
-              onClick={() => setTab("daily")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                tab === "daily" ? "bg-gray-700 text-white" : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Calendar className="w-3 h-3" />
-              Daily
-            </button>
-            <button
-              onClick={() => setTab("longterm")}
-              className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                tab === "longterm" ? "bg-gray-700 text-white" : "text-gray-400 hover:text-white"
-              }`}
-            >
-              <Database className="w-3 h-3" />
-              Long-term
-            </button>
+    <div className="flex h-full min-h-0 bg-gray-950">
+      <aside className="flex w-80 shrink-0 flex-col border-r border-gray-800 bg-gray-900/80">
+        <div className="border-b border-gray-800 p-4">
+          <div className="flex items-center gap-3">
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-2 text-emerald-300">
+              <Brain className="h-4 w-4" />
+            </div>
+            <div>
+              <h1 className="text-sm font-semibold text-white">Daily Memory</h1>
+              <p className="text-xs text-gray-500">{files.length} journal files from workspace memory</p>
+            </div>
           </div>
-          <button
-            onClick={() => loadMemory(false)}
-            disabled={refreshing}
-            className="p-1.5 rounded-md bg-gray-800 border border-gray-700 text-gray-400 hover:text-white transition-colors shrink-0"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          </button>
+          <div className="mt-4 flex items-center gap-2 rounded-xl border border-gray-700 bg-gray-800 px-3 py-2">
+            <Search className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+            <input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search dates or previews..."
+              className="w-full bg-transparent text-sm text-gray-100 outline-none placeholder:text-gray-500"
+            />
+          </div>
         </div>
 
-        {tab === "daily" && (
-          <>
-            {/* Search */}
-            <div className="p-3 border-b border-gray-800">
-              <div className="flex items-center gap-2 bg-gray-800 border border-gray-700 rounded-lg px-2.5 py-1.5">
-                <Search className="w-3.5 h-3.5 text-gray-500 shrink-0" />
-                <input
-                  placeholder="Search memory..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="bg-transparent text-xs text-white placeholder-gray-500 focus:outline-none w-full"
-                />
-              </div>
+        <div className="flex-1 overflow-y-auto p-2">
+          {loading ? (
+            <div className="space-y-2 p-2">
+              {[1, 2, 3, 4, 5].map((item) => (
+                <div key={item} className="h-20 animate-pulse rounded-2xl bg-gray-800" />
+              ))}
             </div>
+          ) : filteredFiles.length === 0 ? (
+            <div className="flex h-48 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-800 bg-gray-900 px-6 text-center">
+              <CalendarDays className="mb-3 h-8 w-8 text-gray-600" />
+              <p className="text-sm text-gray-400">No daily entries matched.</p>
+            </div>
+          ) : (
+            filteredFiles.map((file) => {
+              const isActive = selected?.filename === file.filename;
 
-            {/* File list */}
-            <div className="flex-1 overflow-y-auto py-1">
-              {loading ? (
-                <div className="p-3 space-y-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="h-14 bg-gray-800 rounded-lg animate-pulse" />
+              return (
+                <button
+                  key={file.filename}
+                  type="button"
+                  onClick={() => setSelected(file)}
+                  className={`mb-2 w-full rounded-2xl border px-4 py-3 text-left transition ${
+                    isActive
+                      ? "border-emerald-500/40 bg-emerald-500/10 shadow-[0_0_0_1px_rgba(16,185,129,0.08)]"
+                      : "border-gray-800 bg-gray-900 hover:border-gray-700 hover:bg-gray-800/80"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-white">{formatEntryDate(file.date)}</span>
+                    <span className="rounded-full bg-gray-800 px-2 py-0.5 text-[10px] font-medium text-gray-400">
+                      {file.date}
+                    </span>
+                  </div>
+                  <p className="mt-2 line-clamp-3 text-xs leading-5 text-gray-400">{file.preview || "No preview available."}</p>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </aside>
+
+      <section className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-4xl p-6">
+          {!selected ? (
+            <div className="flex min-h-[24rem] flex-col items-center justify-center rounded-3xl border border-dashed border-gray-800 bg-gray-900/50 text-center">
+              <Brain className="mb-4 h-10 w-10 text-gray-600" />
+              <p className="text-sm text-gray-400">Select a daily entry to read its markdown.</p>
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-gray-800 bg-gray-900/60 p-6 shadow-2xl shadow-black/20">
+              <div className="mb-6 border-b border-gray-800 pb-4">
+                <p className="text-xs uppercase tracking-[0.24em] text-emerald-400">Memory</p>
+                <h2 className="mt-2 text-2xl font-semibold text-white">{formatEntryDate(selected.date)}</h2>
+                <p className="mt-1 text-xs font-mono text-gray-500">{selected.filename}</p>
+              </div>
+
+              {contentLoading ? (
+                <div className="space-y-3">
+                  {CONTENT_SKELETON_WIDTHS.map((width) => (
+                    <div
+                      key={width}
+                      className="h-4 animate-pulse rounded bg-gray-800"
+                      style={{ width }}
+                    />
                   ))}
                 </div>
-              ) : filtered.length === 0 ? (
-                <div className="p-4 text-center text-xs text-gray-600">
-                  <Brain className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                  No memory files found
-                </div>
               ) : (
-                filtered.map((file) => (
-                  <button
-                    key={file.name}
-                    onClick={() => setSelected(file.name)}
-                    className={`w-full text-left px-3 py-2.5 hover:bg-gray-800 transition-colors flex items-start gap-2 ${
-                      selected === file.name ? "bg-gray-800 border-r-2 border-emerald-500" : ""
-                    }`}
-                  >
-                    <FileText className="w-3.5 h-3.5 text-gray-600 shrink-0 mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-gray-200 truncate">
-                        {formatDate(file.name)}
-                      </div>
-                      <div className="text-[10px] text-gray-600 flex items-center gap-1.5 mt-0.5">
-                        <span>{formatRelTime(file.mtime)}</span>
-                        <span>·</span>
-                        <span>{formatFileSize(file.size)}</span>
-                      </div>
-                    </div>
-                    <ChevronRight className="w-3 h-3 text-gray-700 shrink-0 mt-0.5" />
-                  </button>
-                ))
-              )}
-            </div>
-          </>
-        )}
-
-        {tab === "longterm" && (
-          <div className="flex-1 overflow-y-auto p-3">
-            <div className="text-xs text-gray-500 text-center py-4">
-              <Database className="w-8 h-8 mx-auto mb-2 opacity-30" />
-              Long-term memory
-              <br />from MEMORY.md
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {tab === "daily" ? (
-          <div className="p-6">
-            {!selected ? (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-600">
-                <Brain className="w-12 h-12 mb-3 opacity-30" />
-                <p className="text-sm">Select a memory file to view</p>
-              </div>
-            ) : contentLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className={`h-4 bg-gray-800 rounded animate-pulse`} style={{ width: `${70 + Math.random() * 30}%` }} />
-                ))}
-              </div>
-            ) : (
-              <>
-                <div className="mb-4 pb-4 border-b border-gray-800">
-                  <h2 className="text-lg font-bold text-white">{formatDate(selected)}</h2>
-                  <p className="text-xs text-gray-500 font-mono mt-1">{selected}</p>
-                </div>
-                <div className="prose-dark">
+                <div className="prose-dark max-w-none">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
                 </div>
-              </>
-            )}
-          </div>
-        ) : (
-          <div className="p-6">
-            <div className="mb-4 pb-4 border-b border-gray-800">
-              <h2 className="text-lg font-bold text-white">Long-term Memory</h2>
-              <p className="text-xs text-gray-500 mt-1">~/.openclaw/workspace/MEMORY.md</p>
+              )}
             </div>
-            <div className="prose-dark">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{longTermContent}</ReactMarkdown>
-            </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      </section>
     </div>
   );
 }

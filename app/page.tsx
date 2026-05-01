@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bot, CheckSquare, Clock, Cloud, Calendar, AlertCircle, Activity, Zap, TrendingUp } from "lucide-react";
+import { Bot, CheckSquare, Clock, Calendar, AlertCircle, Activity, Zap, TrendingUp } from "lucide-react";
 
 interface WeatherData {
   temp: number | null;

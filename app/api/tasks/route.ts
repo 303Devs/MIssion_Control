@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
+import { OPENCLAW_WORKSPACE } from "@/lib/agent-paths";
 
 export const dynamic = "force-dynamic";
 
 const TASKS_FILE = path.join(process.cwd(), "data", "tasks.json");
-const HOME = process.env.HOME || "/Users/anthony";
-const CLINT_TODO = path.join(HOME, ".openclaw/workspace/clint-todo.md");
+const GILFOYLE_TODO = path.join(OPENCLAW_WORKSPACE, "gilfoyle-todo.md");
 
 interface Task {
   id: string;
@@ -36,14 +36,14 @@ function writeTasks(data: { tasks: Task[] }) {
 }
 
 /**
- * Parse clint-todo.md into Task objects.
+ * Parse gilfoyle-todo.md into Task objects.
  * ## Priority items → in-progress
  * ## Backlog items → backlog
  */
-function parseClintTodo(): Task[] {
+function parseGilfoyleTodo(): Task[] {
   try {
-    if (!fs.existsSync(CLINT_TODO)) return [];
-    const content = fs.readFileSync(CLINT_TODO, "utf-8");
+    if (!fs.existsSync(GILFOYLE_TODO)) return [];
+    const content = fs.readFileSync(GILFOYLE_TODO, "utf-8");
     const tasks: Task[] = [];
 
     const sections = content.split(/^##\s+/m).filter(Boolean);
@@ -70,16 +70,16 @@ function parseClintTodo(): Task[] {
         if (numberedMatch) {
           const title = numberedMatch[1].trim();
           const description = numberedMatch[2]?.trim();
-          const id = `clint-todo-${Buffer.from(title).toString("base64").slice(0, 16)}`;
+          const id = `gilfoyle-todo-${Buffer.from(title).toString("base64").slice(0, 16)}`;
           tasks.push({
             id,
             title,
             description,
             status,
             priority,
-            assignee: "Clint",
-            tags: ["clint-todo"],
-            source: "clint-todo.md",
+            assignee: "Gilfoyle",
+            tags: ["gilfoyle-todo"],
+            source: "gilfoyle-todo.md",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
@@ -92,16 +92,16 @@ function parseClintTodo(): Task[] {
           const title = bulletMatch[1].trim();
           if (!title || title.startsWith("#")) continue;
           const description = bulletMatch[2]?.trim();
-          const id = `clint-todo-${Buffer.from(title).toString("base64").slice(0, 16)}`;
+          const id = `gilfoyle-todo-${Buffer.from(title).toString("base64").slice(0, 16)}`;
           tasks.push({
             id,
             title,
             description,
             status,
             priority,
-            assignee: "Clint",
-            tags: ["clint-todo"],
-            source: "clint-todo.md",
+            assignee: "Gilfoyle",
+            tags: ["gilfoyle-todo"],
+            source: "gilfoyle-todo.md",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
@@ -118,13 +118,13 @@ function parseClintTodo(): Task[] {
 export async function GET() {
   try {
     const staticData = readTasks();
-    const clintTasks = parseClintTodo();
+    const gilfoyleTasks = parseGilfoyleTodo();
 
     // Merge: clint-todo tasks first, then static tasks that aren't clint-todo
-    const clintIds = new Set(clintTasks.map((t) => t.id));
-    const staticOnly = staticData.tasks.filter((t) => !clintIds.has(t.id) && t.source !== "clint-todo.md");
+    const gilfoyleIds = new Set(gilfoyleTasks.map((t) => t.id));
+    const staticOnly = staticData.tasks.filter((t) => !gilfoyleIds.has(t.id) && t.source !== "gilfoyle-todo.md");
 
-    const merged = [...clintTasks, ...staticOnly];
+    const merged = [...gilfoyleTasks, ...staticOnly];
     return NextResponse.json({ tasks: merged });
   } catch {
     return NextResponse.json({ tasks: [] });
@@ -152,8 +152,8 @@ export async function POST(req: NextRequest) {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json();
-    // Don't persist clint-todo.md tasks back to the JSON file
-    if (body.source === "clint-todo.md") {
+    // Don't persist gilfoyle-todo.md tasks back to the JSON file
+    if (body.source === "gilfoyle-todo.md") {
       return NextResponse.json({ ...body, updatedAt: new Date().toISOString() });
     }
     const data = readTasks();

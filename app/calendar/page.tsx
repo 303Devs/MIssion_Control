@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, Calendar, Clock, Zap, BookOpen } from "lucide-react";
+import { ChevronLeft, ChevronRight, Zap, BookOpen } from "lucide-react";
 
 interface CalEvent {
   id?: string | number;

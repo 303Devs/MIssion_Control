@@ -46,7 +46,24 @@ export default function ProjectsPage() {
     setRefreshing(false);
   };
 
-  useEffect(() => { loadProjects(); }, []);
+  useEffect(() => {
+    let cancelled = false;
+
+    const initialLoad = async () => {
+      const res = await fetch("/api/projects");
+      const data = await res.json();
+      if (cancelled) return;
+      setProjects(data.projects || []);
+      setLoading(false);
+      setRefreshing(false);
+    };
+
+    void initialLoad();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = projects.filter((p) =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||

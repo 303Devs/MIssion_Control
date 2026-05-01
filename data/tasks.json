@@ -89,6 +89,17 @@
         "research",
         "llm"
       ]
+    },
+    {
+      "id": "task-1776788732888",
+      "title": "Cron Job",
+      "description": "I just want you to run",
+      "priority": "medium",
+      "assignee": "Squeak",
+      "project": "bus-allert",
+      "status": "backlog",
+      "createdAt": "2026-04-21T16:25:32.888Z",
+      "updatedAt": "2026-04-21T16:25:32.888Z"
     }
   ]
 }

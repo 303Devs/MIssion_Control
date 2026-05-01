@@ -15,7 +15,6 @@ interface CalEvent {
 function parseIcal(icalText: string): CalEvent[] {
   const events: CalEvent[] = [];
   const lines = icalText.split(/\r?\n/);
-  let current: Partial<CalEvent> & { raw?: Record<string, string> } = {};
   let inEvent = false;
   const rawProps: Record<string, string> = {};
 
@@ -29,7 +28,6 @@ function parseIcal(icalText: string): CalEvent[] {
 
     if (line === "BEGIN:VEVENT") {
       inEvent = true;
-      current = {};
       Object.keys(rawProps).forEach((k) => delete rawProps[k]);
     } else if (line === "END:VEVENT" && inEvent) {
       inEvent = false;
