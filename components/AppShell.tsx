@@ -4,12 +4,9 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
-  Bot,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Pause,
   Search,
   UserCircle2,
 } from "lucide-react";
@@ -167,20 +164,15 @@ function SearchModal({
 
 function TopBar({
   activityOpen,
-  agents,
   onOpenSearch,
   onToggleActivity,
   searchQuery,
 }: {
   activityOpen: boolean;
-  agents: LiveAgent[];
   onOpenSearch: () => void;
   onToggleActivity: () => void;
   searchQuery: string;
 }) {
-  const [paused, setPaused] = useState(false);
-  const [pingOpen, setPingOpen] = useState(false);
-
   return (
     <div className="flex h-14 shrink-0 items-center gap-4 border-b border-gray-800 bg-gray-950 px-4">
       <button
@@ -200,59 +192,6 @@ function TopBar({
       </button>
 
       <div className="ml-auto flex items-center gap-2">
-        <button
-          onClick={() => setPaused((value) => !value)}
-          className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
-            paused
-              ? "border-yellow-500/30 bg-yellow-500/10 text-yellow-300"
-              : "border-gray-700 bg-gray-900 text-gray-300 hover:border-gray-600 hover:text-white"
-          }`}
-        >
-          <Pause className="h-4 w-4" />
-          {paused ? "Paused" : "Pause"}
-        </button>
-
-        <div className="relative">
-          <button
-            onClick={() => setPingOpen((value) => !value)}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-300 transition-colors hover:border-emerald-500/30 hover:text-emerald-300"
-          >
-            <Bot className="h-4 w-4 text-emerald-400" />
-            Ping Agent
-            <ChevronDown className="h-4 w-4 text-gray-500" />
-          </button>
-
-          {pingOpen && (
-            <div className="absolute right-0 top-[calc(100%+0.5rem)] z-30 w-56 rounded-xl border border-gray-800 bg-gray-900 p-1 shadow-2xl shadow-black/40">
-              {agents.map((agent) => (
-                <button
-                  key={agent.id}
-                  onClick={() => setPingOpen(false)}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-gray-800 hover:text-white"
-                >
-                  <span>{agent.avatar || "•"}</span>
-                  <span className="truncate">{agent.name}</span>
-                  <span
-                    className={`ml-auto h-2 w-2 rounded-full ${
-                      agent.status === "active"
-                        ? "bg-emerald-400"
-                        : agent.status === "error"
-                          ? "bg-red-400"
-                          : agent.status === "busy"
-                            ? "bg-yellow-400"
-                            : "bg-gray-500"
-                    }`}
-                  />
-                </button>
-              ))}
-
-              {agents.length === 0 && (
-                <div className="px-3 py-2 text-sm text-gray-500">No agents available</div>
-              )}
-            </div>
-          )}
-        </div>
-
         <button
           onClick={onToggleActivity}
           className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
@@ -464,7 +403,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
           activityOpen={activityOpen}
-          agents={agents}
           onOpenSearch={() => setSearchOpen(true)}
           onToggleActivity={() => setActivityOpen((value) => !value)}
           searchQuery={sidebarQuery}

@@ -151,7 +151,7 @@ function TeamPageContent() {
         {loading ? (
           <div className="grid gap-4 lg:grid-cols-3">
             {[1, 2, 3].map((item) => (
-              <div key={item} className="h-72 animate-pulse rounded-3xl bg-gray-900" />
+              <div key={item} className="h-48 animate-pulse rounded-3xl bg-gray-900" />
             ))}
           </div>
         ) : (

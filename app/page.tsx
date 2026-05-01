@@ -1,7 +1,7 @@
 "use client";
 
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
-import { Bot, CheckSquare, Clock, Calendar, AlertCircle, Activity, Zap, TrendingUp } from "lucide-react";
+import { Bot, CheckSquare, Clock, Calendar, AlertCircle, Activity, Zap, TrendingUp, AlertTriangle } from "lucide-react";
 
 interface WeatherData {
   temp: number | null;
@@ -151,10 +151,21 @@ function getDueDateColor(iso: string) {
     const diff = new Date(iso).getTime() - Date.now();
     const days = diff / 86400000;
     if (days < 0) return "text-red-400";
-    if (days < 2) return "text-red-400";
+    if (days < 2) return "text-orange-400";
     if (days < 5) return "text-yellow-400";
     return "text-gray-400";
   } catch { return "text-gray-400"; }
+}
+
+function isOverdue(iso: string): boolean {
+  try { return new Date(iso).getTime() < Date.now(); } catch { return false; }
+}
+
+function isDueSoon(iso: string): boolean {
+  try {
+    const diff = new Date(iso).getTime() - Date.now();
+    return diff >= 0 && diff / 86400000 < 2;
+  } catch { return false; }
 }
 
 function DashboardContent() {
@@ -295,24 +306,40 @@ function DashboardContent() {
             </div>
           ) : (
             <div className="space-y-2">
-              {canvasEvents.map((ev) => (
-                <div key={ev.id} className="flex items-start gap-3 p-2.5 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                  <div className={`shrink-0 text-xs font-bold font-mono mt-0.5 w-14 text-right ${getDueDateColor(ev.dueDate)}`}>
-                    {formatDueDate(ev.dueDate)}
+              {canvasEvents.map((ev) => {
+                const overdue = isOverdue(ev.dueDate);
+                const soon = isDueSoon(ev.dueDate);
+                return (
+                  <div
+                    key={ev.id}
+                    className={`flex items-start gap-3 p-2.5 rounded-lg transition-colors border ${
+                      overdue
+                        ? "bg-red-500/10 border-red-500/20 hover:bg-red-500/15"
+                        : soon
+                        ? "bg-orange-500/5 border-orange-500/15 hover:bg-orange-500/10"
+                        : "bg-gray-800/50 border-transparent hover:bg-gray-800"
+                    }`}
+                  >
+                    <div className={`shrink-0 flex items-center gap-1 text-xs font-bold font-mono mt-0.5 ${getDueDateColor(ev.dueDate)}`}>
+                      {overdue && <AlertTriangle className="w-3 h-3" />}
+                      <span className="w-12 text-right">{formatDueDate(ev.dueDate)}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className={`text-sm font-medium truncate ${overdue ? "text-red-200" : "text-white"}`}>
+                        {ev.title}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-0.5">{ev.course}</div>
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        ev.type === "exam" ? "bg-red-500/20 text-red-400" :
+                        ev.type === "quiz" ? "bg-orange-500/20 text-orange-400" :
+                        "bg-blue-500/20 text-blue-400"
+                      }`}>
+                        {ev.type}
+                      </span>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <div className="text-sm text-white font-medium truncate">{ev.title}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">{ev.course}</div>
-                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                      ev.type === "exam" ? "bg-red-500/20 text-red-400" :
-                      ev.type === "quiz" ? "bg-orange-500/20 text-orange-400" :
-                      "bg-blue-500/20 text-blue-400"
-                    }`}>
-                      {ev.type}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

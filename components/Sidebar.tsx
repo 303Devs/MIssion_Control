@@ -34,6 +34,8 @@ export default function Sidebar({ searchQuery = "" }: { searchQuery?: string }) 
             <Link
               key={href}
               href={href}
+              title={label}
+              aria-label={label}
               className={`group flex items-center gap-3 rounded-md border px-3 py-2 text-sm transition-all duration-150 ${
                 isActive
                   ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"

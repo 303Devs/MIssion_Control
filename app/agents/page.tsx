@@ -1,7 +1,7 @@
 "use client";
 
 import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
-import { Activity, CheckSquare, Cpu, RefreshCw, Zap } from "lucide-react";
+import { Activity, CheckSquare, Clock, Cpu, RefreshCw, Zap } from "lucide-react";
 
 interface Agent {
   id: string;
@@ -151,6 +151,7 @@ function AgentsContent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   const loadAgents = async () => {
     setRefreshing(true);
@@ -159,6 +160,7 @@ function AgentsContent() {
     setAgents(d.agents || []);
     setLoading(false);
     setRefreshing(false);
+    setLastUpdated(new Date());
   };
 
   useEffect(() => {
@@ -171,6 +173,7 @@ function AgentsContent() {
       setAgents(d.agents || []);
       setLoading(false);
       setRefreshing(false);
+      setLastUpdated(new Date());
     };
 
     void poll();
@@ -192,7 +195,15 @@ function AgentsContent() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-white">Agent Roster</h1>
-          <p className="text-sm text-gray-500 mt-0.5">AI workforce management</p>
+          <p className="text-sm text-gray-500 mt-0.5">
+            AI workforce management
+            {lastUpdated && (
+              <span className="ml-2 inline-flex items-center gap-1 text-gray-700">
+                <Clock className="w-3 h-3" />
+                Updated {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+          </p>
         </div>
         <button
           onClick={loadAgents}
@@ -226,7 +237,7 @@ function AgentsContent() {
       {loading ? (
         <div className="grid grid-cols-2 gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-64 bg-gray-900 border border-gray-800 rounded-xl animate-pulse" />
+            <div key={i} className="h-48 bg-gray-900 border border-gray-800 rounded-xl animate-pulse" />
           ))}
         </div>
       ) : (

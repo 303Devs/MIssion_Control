@@ -68,7 +68,7 @@ function PipelinePageContent() {
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4].map((item) => (
-              <div key={item} className="h-40 animate-pulse rounded-3xl bg-gray-900" />
+              <div key={item} className="h-48 animate-pulse rounded-3xl bg-gray-900" />
             ))}
           </div>
         ) : (

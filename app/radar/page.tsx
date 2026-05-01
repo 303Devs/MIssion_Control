@@ -2,7 +2,7 @@
 
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
-import { Radio, RefreshCw, GitCommit, FileText, Bot, Clock, Timer, Search, Filter } from "lucide-react";
+import { Radio, RefreshCw, GitCommit, FileText, Bot, Clock, Timer, Search, Filter, Wifi } from "lucide-react";
 
 interface RadarEvent {
   id: string;
@@ -171,10 +171,17 @@ function RadarPageContent() {
             <div key={i} className="h-14 bg-gray-900 border border-gray-800 rounded-xl animate-pulse" />
           ))}
         </div>
+      ) : events.length === 0 ? (
+        <div className="text-center py-24 border border-dashed border-gray-800 rounded-2xl">
+          <Wifi className="w-10 h-10 text-gray-700 mx-auto mb-3" />
+          <p className="text-gray-400 font-medium">No activity recorded yet</p>
+          <p className="text-gray-600 text-sm mt-1">Events will appear as agents run tasks, commits land, and crons fire.</p>
+        </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <Filter className="w-10 h-10 text-gray-800 mx-auto mb-3" />
           <p className="text-gray-400 font-medium">No events match the filter</p>
+          <p className="text-gray-600 text-sm mt-1">Try clearing the search or selecting a different type.</p>
         </div>
       ) : (
         <div className="space-y-1">

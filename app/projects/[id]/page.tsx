@@ -4,7 +4,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { GitBranch, GitCommit, FolderOpen, ArrowLeft, Terminal, FileText } from "lucide-react";
+import { GitBranch, GitCommit, FolderOpen, ArrowLeft, Terminal, FileText, CheckCircle, AlertCircle } from "lucide-react";
 
 interface Project {
   id: string;
@@ -58,8 +58,16 @@ function ProjectDetailPageContent() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="h-64 bg-gray-900 rounded-xl animate-pulse" />
+      <div className="p-6 space-y-4">
+        <div className="h-6 w-32 bg-gray-900 rounded animate-pulse" />
+        <div className="h-10 w-64 bg-gray-900 rounded-xl animate-pulse" />
+        <div className="grid grid-cols-3 gap-6">
+          <div className="col-span-2 space-y-4">
+            <div className="h-48 bg-gray-900 rounded-xl animate-pulse" />
+            <div className="h-48 bg-gray-900 rounded-xl animate-pulse" />
+          </div>
+          <div className="h-80 bg-gray-900 rounded-xl animate-pulse" />
+        </div>
       </div>
     );
   }
@@ -78,15 +86,38 @@ function ProjectDetailPageContent() {
   return (
     <div className="p-6">
       {/* Back */}
-      <Link href="/projects" className="flex items-center gap-2 text-gray-400 hover:text-white mb-6 text-sm transition-colors">
-        <ArrowLeft className="w-4 h-4" /> Back to Projects
+      <Link href="/projects" className="inline-flex items-center gap-2 text-gray-400 hover:text-white mb-6 text-sm transition-colors group">
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" /> Back to Projects
       </Link>
 
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <FolderOpen className="w-6 h-6 text-emerald-400" />
-        <h1 className="text-2xl font-bold text-white">{project.name}</h1>
-        <span className="text-xs px-2 py-1 rounded bg-gray-800 text-gray-400 font-mono">{project.language}</span>
+      <div className="flex items-start justify-between gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+            <FolderOpen className="w-5 h-5 text-emerald-400" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">{project.name}</h1>
+            <p className="text-xs text-gray-600 font-mono mt-0.5 truncate max-w-sm">{project.path}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {project.language && (
+            <span className="text-xs px-2.5 py-1 rounded-full bg-gray-800 text-gray-400 font-mono border border-gray-700">
+              {project.language}
+            </span>
+          )}
+          {project.isGit && (
+            <span className={`inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full font-medium border ${
+              project.status === "clean"
+                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                : "bg-yellow-500/10 text-yellow-400 border-yellow-500/20"
+            }`}>
+              {project.status === "clean" ? <CheckCircle className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+              {project.status}
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-6">
