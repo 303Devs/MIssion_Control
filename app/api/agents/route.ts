@@ -326,26 +326,6 @@ function extractAgentFromLabel(label: string): string | null {
 }
 
 /**
- * Format a duration in milliseconds as a human-readable uptime string.
- * Examples: 'never', '< 1m', '45m', '3h 12m', '2d 5h'
- */
-function formatUptime(earliestMs: number, latestMs: number): string {
-  if (earliestMs === Infinity || latestMs === 0) return "never";
-  const ms = latestMs - earliestMs;
-  if (ms < 60_000) return "< 1m";
-  const minutes = Math.floor(ms / 60_000);
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  if (hours < 24) {
-    return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}m` : `${hours}h`;
-  }
-  const days = Math.floor(hours / 24);
-  const remainingHours = hours % 24;
-  return remainingHours > 0 ? `${days}d ${remainingHours}h` : `${days}d`;
-}
-
-/**
  * Build a map of agentId → live data including uptime tracking.
  */
 function buildAgentLiveData(

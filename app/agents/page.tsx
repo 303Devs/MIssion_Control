@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { Activity, CheckSquare, Cpu, RefreshCw, Zap } from "lucide-react";
 
 interface Agent {
@@ -33,6 +33,35 @@ const MODEL_COLORS: Record<string, string> = {
   "claude-sonnet-4-6": "text-blue-400",
   "claude-haiku-4-5-20251001": "text-cyan-400",
 };
+
+class AgentsErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Agents page render failed", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-6">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+            Agent roster failed to render. Refresh the page to retry.
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function formatRelativeTime(isoString: string | null): string {
   if (!isoString) return "never";
@@ -118,7 +147,7 @@ function AgentCard({ agent }: { agent: Agent }) {
   );
 }
 
-export default function AgentsPage() {
+function AgentsContent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -208,5 +237,13 @@ export default function AgentsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AgentsPage() {
+  return (
+    <AgentsErrorBoundary>
+      <AgentsContent />
+    </AgentsErrorBoundary>
   );
 }

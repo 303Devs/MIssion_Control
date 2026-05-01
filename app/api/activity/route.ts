@@ -1,5 +1,4 @@
 import fs from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
 import { OPENCLAW_CRON_FILE, OPENCLAW_SESSIONS_FILE } from "@/lib/agent-paths";
 

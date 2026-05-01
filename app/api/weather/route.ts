@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 
-// Boulder, CO coordinates
-const LAT = 40.015;
-const LON = -105.2705;
+// Defaults keep local development usable; production should set WEATHER_LAT/WEATHER_LON.
+const LAT = Number(process.env.WEATHER_LAT || "40.015");
+const LON = Number(process.env.WEATHER_LON || "-105.2705");
 
 export async function GET() {
   try {

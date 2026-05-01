@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
 
 interface Task {
@@ -29,6 +29,35 @@ const PRIORITY_COLORS: Record<string, string> = {
   high: "text-orange-400 bg-orange-500/10",
   critical: "text-red-400 bg-red-500/10",
 };
+
+class TasksErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Tasks page render failed", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-6">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+            Task board failed to render. Refresh the page to retry.
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function TaskCard({
   task,
@@ -190,7 +219,7 @@ function AddTaskModal({
   );
 }
 
-export default function TasksPage() {
+function TasksContent() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -339,5 +368,13 @@ export default function TasksPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <TasksErrorBoundary>
+      <TasksContent />
+    </TasksErrorBoundary>
   );
 }

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
-const CANVAS_ICAL_URL =
-  "CANVAS_ICAL_URL_REMOVED";
+const CANVAS_ICAL_URL = process.env.CANVAS_ICAL_URL;
 
 interface CalEvent {
   id: string;
@@ -103,6 +102,10 @@ function parseIcal(icalText: string): CalEvent[] {
 }
 
 export async function GET() {
+  if (!CANVAS_ICAL_URL) {
+    return NextResponse.json({ events: [], count: 0, error: "CANVAS_ICAL_URL is not configured" });
+  }
+
   try {
     const res = await fetch(CANVAS_ICAL_URL, {
       next: { revalidate: 900 }, // cache 15 min

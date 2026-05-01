@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
-import path from "path";
 import { OPENCLAW_CRON_FILE } from "@/lib/agent-paths";
 
 export const dynamic = "force-dynamic";

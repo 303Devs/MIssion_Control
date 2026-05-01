@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { Bot, CheckSquare, Clock, Calendar, AlertCircle, Activity, Zap, TrendingUp } from "lucide-react";
 
 interface WeatherData {
@@ -57,6 +57,35 @@ interface Agent {
   currentTask: string | null;
   avatar: string;
   color: string;
+}
+
+class DashboardErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: Error | null }
+> {
+  state = { error: null };
+
+  static getDerivedStateFromError(error: Error) {
+    return { error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Dashboard render failed", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-6">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+            Dashboard failed to render. Refresh the page to retry.
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 function Clock24() {
@@ -128,7 +157,7 @@ function getDueDateColor(iso: string) {
   } catch { return "text-gray-400"; }
 }
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [calEvents, setCalEvents] = useState<CalEvent[]>([]);
   const [canvasEvents, setCanvasEvents] = useState<CanvasEvent[]>([]);
@@ -342,5 +371,13 @@ export default function DashboardPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <DashboardErrorBoundary>
+      <DashboardContent />
+    </DashboardErrorBoundary>
   );
 }

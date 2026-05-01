@@ -9,6 +9,8 @@ interface Message {
   timestamp: Date;
 }
 
+// Integration status: in-progress. The legacy Toolbar used this panel, but the current AppShell
+// top bar only exposes the agent picker; wire this into AppShell before enabling chat UX again.
 export default function ChatPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [messages, setMessages] = useState<Message[]>([
     {
