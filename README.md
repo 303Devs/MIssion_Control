@@ -1,36 +1,94 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mission Control
 
-## Getting Started
+Anthony's private dashboard — agents, tasks, calendar, weather, and project status in one place.
 
-First, run the development server:
+Built with [Next.js](https://nextjs.org) 16, React 19, Tailwind CSS 4.
+
+---
+
+## Quick Start
+
+### 1. Install dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure environment
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` and set the variables you need:
+
+| Variable | Required | Description |
+|---|---|---|
+| `CANVAS_ICAL_URL` | For calendar | Canvas iCal feed URL |
+| `WEATHER_LAT` / `WEATHER_LON` | For weather | Location coordinates |
+| `MISSION_CONTROL_AGENTS_ROOT` | For agents panel | Path to agent workspace root |
+| `MISSION_CONTROL_OPENCLAW_ROOT` | For OpenClaw data | Path to OpenClaw workspace |
+| `MISSION_CONTROL_HERMES_ROOT` | For Hermes data | Path to Hermes workspace |
+| `MISSION_CONTROL_VAULT_ROOT` | For vault data | Path to Agent Memory Vault |
+| `OPENCLAW_GATEWAY_URL` | For Gateway API | OpenClaw Gateway base URL |
+| `OPENCLAW_GATEWAY_TOKEN` | For Gateway auth | Bearer token for Gateway |
+| `MISSION_CONTROL_SECRET` | For remote access | API bearer token (localhost-only if unset) |
+
+### 3. Run dev server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Production-equivalent local build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build && npm start
+```
+
+See [RUNBOOK.md](./RUNBOOK.md) for full local staging instructions, auth setup, and what requires Anthony approval before any deploy step.
+
+---
+
+## Scripts
+
+```bash
+npm run dev      # Development server (hot reload)
+npm run build    # Production build (TypeScript + Next.js)
+npm start        # Start production server (requires build)
+npm run lint     # ESLint
+```
+
+---
+
+## Project Structure
+
+```
+app/          Next.js App Router pages and API routes
+components/   React UI components
+lib/          Shared utilities and data loaders
+data/         Static data files
+public/       Static assets
+```
+
+---
+
+## CI
+
+GitHub Actions workflow at `.github/workflows/ci.yml` runs lint + build on push/PR to `main`.
+Requires repo to be pushed to GitHub (Anthony approval required before push).
+
+---
 
 ## Learn More
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- [Next.js Documentation](https://nextjs.org/docs)
+- [RUNBOOK.md](./RUNBOOK.md) — local staging, env vars, and auth
 
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Check out the [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
