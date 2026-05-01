@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { Server, RefreshCw, HardDrive, Cpu, MemoryStick, Clock, Wifi, WifiOff, CheckCircle, AlertTriangle, Terminal, Timer } from "lucide-react";
 
@@ -62,7 +63,7 @@ function StatCard({
   );
 }
 
-export default function SystemPage() {
+function SystemPageContent() {
   const [data, setData] = useState<SystemData | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
@@ -253,5 +254,13 @@ export default function SystemPage() {
         <div className="text-center py-20 text-gray-600">Failed to load system data</div>
       )}
     </div>
+  );
+}
+
+export default function SystemPage() {
+  return (
+    <ErrorBoundary label="System page">
+      <SystemPageContent />
+    </ErrorBoundary>
   );
 }

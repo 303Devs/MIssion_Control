@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { CheckCircle, XCircle, Clock, RefreshCw, Shield, AlertTriangle, Inbox } from "lucide-react";
 
@@ -23,7 +24,7 @@ const RISK_STYLES: Record<string, string> = {
 
 type Filter = "pending" | "all" | "resolved";
 
-export default function ApprovalsPage() {
+function ApprovalsPageContent() {
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -211,5 +212,13 @@ export default function ApprovalsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ApprovalsPage() {
+  return (
+    <ErrorBoundary label="Approvals page">
+      <ApprovalsPageContent />
+    </ErrorBoundary>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { GitBranch, GitCommit, Clock, RefreshCw, FolderOpen, ExternalLink } from "lucide-react";
 import Link from "next/link";
@@ -31,7 +32,7 @@ const LANG_COLORS: Record<string, string> = {
   "Ruby": "text-red-400 bg-red-500/10",
 };
 
-export default function ProjectsPage() {
+function ProjectsPageContent() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -181,5 +182,13 @@ export default function ProjectsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <ErrorBoundary label="Projects page">
+      <ProjectsPageContent />
+    </ErrorBoundary>
   );
 }

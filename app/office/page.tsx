@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 
 interface Agent {
@@ -127,7 +128,7 @@ function PixelServer() {
   );
 }
 
-export default function OfficePage() {
+function OfficePageContent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [time, setTime] = useState("");
@@ -283,5 +284,13 @@ export default function OfficePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OfficePage() {
+  return (
+    <ErrorBoundary label="Office page">
+      <OfficePageContent />
+    </ErrorBoundary>
   );
 }

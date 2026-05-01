@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { Users, RefreshCw, BookOpen, Gavel, Eye, BarChart2, Map } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -56,7 +57,7 @@ const AGENT_COLORS: Record<string, string> = {
 
 type TypeFilter = "all" | CouncilEntry["type"];
 
-export default function CouncilPage() {
+function CouncilPageContent() {
   const [entries, setEntries] = useState<CouncilEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -221,5 +222,13 @@ export default function CouncilPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CouncilPage() {
+  return (
+    <ErrorBoundary label="Council page">
+      <CouncilPageContent />
+    </ErrorBoundary>
   );
 }

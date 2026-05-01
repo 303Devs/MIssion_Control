@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { ArrowDown, Workflow } from "lucide-react";
 
@@ -26,7 +27,7 @@ const STATUS_STYLES: Record<Agent["status"], string> = {
   error: "border-red-500/30 bg-red-500/10 text-red-300",
 };
 
-export default function PipelinePage() {
+function PipelinePageContent() {
   const [stages, setStages] = useState<PipelineStage[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [source, setSource] = useState("");
@@ -121,5 +122,13 @@ export default function PipelinePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PipelinePage() {
+  return (
+    <ErrorBoundary label="Pipeline page">
+      <PipelinePageContent />
+    </ErrorBoundary>
   );
 }

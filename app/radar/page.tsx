@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { Radio, RefreshCw, GitCommit, FileText, Bot, Clock, Timer, Search, Filter } from "lucide-react";
 
@@ -53,7 +54,7 @@ function timeAgo(ms: number): string {
 
 type TypeFilter = "all" | RadarEvent["type"];
 
-export default function RadarPage() {
+function RadarPageContent() {
   const [events, setEvents] = useState<RadarEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -216,5 +217,13 @@ export default function RadarPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RadarPage() {
+  return (
+    <ErrorBoundary label="Radar page">
+      <RadarPageContent />
+    </ErrorBoundary>
   );
 }

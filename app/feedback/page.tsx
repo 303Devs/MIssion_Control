@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { Star, RefreshCw, MessageSquare, Plus, X, Trash2, CheckCircle } from "lucide-react";
 
@@ -55,7 +56,7 @@ function StarRating({ value, onChange }: { value: number; onChange?: (v: number)
   );
 }
 
-export default function FeedbackPage() {
+function FeedbackPageContent() {
   const [feedback, setFeedback] = useState<FeedbackEntry[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -334,5 +335,13 @@ export default function FeedbackPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function FeedbackPage() {
+  return (
+    <ErrorBoundary label="Feedback page">
+      <FeedbackPageContent />
+    </ErrorBoundary>
   );
 }

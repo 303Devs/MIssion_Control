@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { Sparkles } from "lucide-react";
 
@@ -96,7 +97,7 @@ function AgentCard({ agent, emphasized = false }: { agent: Agent; emphasized?: b
   );
 }
 
-export default function TeamPage() {
+function TeamPageContent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -182,5 +183,13 @@ export default function TeamPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function TeamPage() {
+  return (
+    <ErrorBoundary label="Team page">
+      <TeamPageContent />
+    </ErrorBoundary>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { Users, RefreshCw, Bot, User, Search, Cpu } from "lucide-react";
 
@@ -107,7 +108,7 @@ function PersonCard({ person }: { person: Person }) {
   );
 }
 
-export default function PeoplePage() {
+function PeoplePageContent() {
   const [people, setPeople] = useState<Person[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -208,5 +209,13 @@ export default function PeoplePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PeoplePage() {
+  return (
+    <ErrorBoundary label="People page">
+      <PeoplePageContent />
+    </ErrorBoundary>
   );
 }

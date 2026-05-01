@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, FileText, FolderTree } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -121,7 +122,7 @@ function TreeNode({
   );
 }
 
-export default function DocsPage() {
+function DocsPageContent() {
   const [tree, setTree] = useState<DocsTreeNode[]>([]);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [selected, setSelected] = useState<DocsTreeNode | null>(null);
@@ -249,5 +250,13 @@ export default function DocsPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function DocsPage() {
+  return (
+    <ErrorBoundary label="Docs page">
+      <DocsPageContent />
+    </ErrorBoundary>
   );
 }

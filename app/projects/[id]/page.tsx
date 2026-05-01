@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
@@ -23,7 +24,7 @@ interface FileInfo {
   type: 'file' | 'directory';
 }
 
-export default function ProjectDetailPage() {
+function ProjectDetailPageContent() {
   const params = useParams();
   const [project, setProject] = useState<Project | null>(null);
   const [files, setFiles] = useState<FileInfo[]>([]);
@@ -195,5 +196,13 @@ export default function ProjectDetailPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProjectDetailPage() {
+  return (
+    <ErrorBoundary label="Project detail page">
+      <ProjectDetailPageContent />
+    </ErrorBoundary>
   );
 }

@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ approval: newApproval });
 }
 
-export async function PUT(req: NextRequest) {
+async function updateApproval(req: NextRequest) {
   const body = (await req.json()) as { id: string; status: "approved" | "rejected"; resolvedBy?: string };
 
   if (!body.id || typeof body.id !== "string") {
@@ -106,6 +106,14 @@ export async function PUT(req: NextRequest) {
 
   writeApprovals(approvals);
   return NextResponse.json({ approval: approvals[idx] });
+}
+
+export async function PUT(req: NextRequest) {
+  return updateApproval(req);
+}
+
+export async function PATCH(req: NextRequest) {
+  return updateApproval(req);
 }
 
 export async function DELETE(req: NextRequest) {

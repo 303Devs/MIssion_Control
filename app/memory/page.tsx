@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { Brain, CalendarDays, Search } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -23,7 +24,7 @@ function formatEntryDate(dateString: string) {
   });
 }
 
-export default function MemoryPage() {
+function MemoryPageContent() {
   const [files, setFiles] = useState<MemoryFile[]>([]);
   const [selected, setSelected] = useState<MemoryFile | null>(null);
   const [content, setContent] = useState("");
@@ -160,5 +161,13 @@ export default function MemoryPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function MemoryPage() {
+  return (
+    <ErrorBoundary label="Memory page">
+      <MemoryPageContent />
+    </ErrorBoundary>
   );
 }

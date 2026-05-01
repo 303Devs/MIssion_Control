@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Zap, BookOpen } from "lucide-react";
 
@@ -55,7 +56,7 @@ function formatTime(iso: string) {
   } catch { return ""; }
 }
 
-export default function CalendarPage() {
+function CalendarPageContent() {
   const [view, setView] = useState<ViewMode>("week");
   const [today] = useState(new Date());
   const [current, setCurrent] = useState(new Date());
@@ -338,5 +339,13 @@ export default function CalendarPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CalendarPage() {
+  return (
+    <ErrorBoundary label="Calendar page">
+      <CalendarPageContent />
+    </ErrorBoundary>
   );
 }

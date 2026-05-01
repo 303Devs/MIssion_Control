@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { Zap, Plus, RefreshCw, Send, X, CheckCircle, Clock, AlertCircle } from "lucide-react";
 
@@ -39,7 +40,7 @@ const STATUS_ICON: Record<string, React.ReactNode> = {
   review: <Clock className="w-3.5 h-3.5 text-yellow-400" />,
 };
 
-export default function FactoryPage() {
+function FactoryPageContent() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [recentTasks, setRecentTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -321,5 +322,13 @@ export default function FactoryPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function FactoryPage() {
+  return (
+    <ErrorBoundary label="Factory page">
+      <FactoryPageContent />
+    </ErrorBoundary>
   );
 }

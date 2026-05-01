@@ -1,5 +1,6 @@
 "use client";
 
+import ErrorBoundary from "@/components/ErrorBoundary";
 import { useState, useEffect, useCallback } from "react";
 import { FileText, Folder, RefreshCw, ChevronRight, FolderOpen, Search, Eye } from "lucide-react";
 import ReactMarkdown from "react-markdown";
@@ -36,7 +37,7 @@ function getChildren(files: ContentFile[], parentPath: string): ContentFile[] {
   });
 }
 
-export default function ContentPage() {
+function ContentPageContent() {
   const [files, setFiles] = useState<ContentFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -219,5 +220,13 @@ export default function ContentPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ContentPage() {
+  return (
+    <ErrorBoundary label="Content page">
+      <ContentPageContent />
+    </ErrorBoundary>
   );
 }

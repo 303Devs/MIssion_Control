@@ -9,9 +9,10 @@ export async function GET() {
     const stages = parsePipelineStages(content);
     return NextResponse.json({ stages, source: ORG_FILE });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : String(error), stages: [] },
-      { status: 500 }
-    );
+    return NextResponse.json({
+      stages: [],
+      source: ORG_FILE,
+      error: error instanceof Error ? error.message : String(error),
+    });
   }
 }
