@@ -23,22 +23,15 @@ const CLI_CACHE_TTL_MS = 10_000;
 // Known agent name prefixes that appear in session labels
 const KNOWN_AGENTS = [
   "bob",
-  "alice",
-  "jeeves",
   "gilfoyle",
-  "turing",
-  "ada",
-  "nora",
   "ive",
+  "nora",
+  "knope",
+  "dwight",
   "joyce",
   "banksy",
-  "sagan",
-  "orwell",
-  "spangler",
-  "mustafa",
-  "atticus",
-  "thich",
-  "buffett",
+  "jeeves",
+  "turing",
 ];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
