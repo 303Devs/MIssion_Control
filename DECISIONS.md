@@ -4,6 +4,39 @@ _ADR log for significant decisions. Most recent first._
 
 ---
 
+## ADR-003: Standing Engineering Policy for Normal Development
+
+| Field | Detail |
+|---|---|
+| **ID** | ADR-003 |
+| **Date** | 2026-05-01 |
+| **Status** | Accepted |
+| **Decided by** | Anthony |
+
+### Context
+
+After GitHub remote setup and CI activation, Mission Control needs a normal development policy that prevents agent-driven work from drifting into unreviewed, untested direct changes.
+
+### Decision
+
+Mission Control follows Anthony's standing engineering policy:
+
+- Every task gets a Linear issue before implementation begins.
+- Behavior changes use TDD-oriented work: failing test first, implementation second, refactor only after green.
+- Non-trivial changes require automated tests; bug fixes require regression tests unless impossible or explicitly waived.
+- Local tests/build must pass before handoff.
+- Turing reviews non-trivial implementation before it is considered done.
+- Normal GitHub development uses feature branches and PRs into `main`.
+- GitHub Actions CI must pass before GitHub-involved work is considered complete.
+
+### Consequences
+
+- Direct pushes to `main` are not normal workflow and require an explicit exception.
+- Docs/config-only changes may be test-exempt, but the exemption must be stated in the handoff.
+- A task is not done just because code was written; it is done only when Linear, tests/build, review, and CI evidence are complete.
+
+---
+
 ## ADR-002: Git History Scrub Before Remote Push (303-22)
 
 | Field | Detail |

@@ -101,18 +101,36 @@ npm run build     # Includes TypeScript compile (tsc)
 
 ---
 
+## Engineering Workflow Gates
+
+Normal development must follow the standing engineering policy:
+
+1. Create or identify the Linear issue for the task before implementation.
+2. Use a feature branch and PR into `main` for GitHub work.
+3. For behavior changes, work TDD-first: failing test, minimal implementation, passing test, refactor.
+4. Add/adjust automated tests for non-trivial changes and regression tests for bug fixes.
+5. Run local checks before handoff:
+
+```bash
+npm run lint
+npm run build
+```
+
+6. Route non-trivial implementation to Turing for review.
+7. Do not mark complete until local checks pass and GitHub Actions CI is green when GitHub is involved.
+
+---
+
 ## What Requires Anthony Approval Before Any Next Step
 
 The following actions are **NOT authorized** without explicit Anthony approval:
 
-- Creating or configuring a GitHub remote (`git remote add`, `gh repo create`)
-- Pushing any branch to GitHub (`git push`)
-- Configuring branch protection rules
-- Any CI/CD pipeline activation or GitHub Actions trigger
 - Deployment to any staging or production environment (Vercel, Railway, etc.)
+- Public release or announcement
+- External service setup beyond already-approved GitHub repo/branch protection
 - Any `sudo` or elevated commands
 
-**Current state:** CI config exists locally (`.github/workflows/ci.yml`) and is committed, but will not run until the repo is pushed to GitHub with Anthony's approval.
+**Current state:** GitHub remote and branch protection are configured. Normal development should proceed by feature branch + PR into `main`; direct pushes to `main` require explicit exception approval.
 
 ---
 
