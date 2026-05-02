@@ -75,10 +75,25 @@ public/       Static assets
 
 ---
 
+## Engineering Policy
+
+Mission Control follows Anthony's standing engineering policy:
+
+- Linear issue per task before implementation.
+- TDD-oriented work for behavior changes.
+- Automated tests for non-trivial changes and regression tests for bug fixes.
+- Local tests/build must pass before work is considered complete.
+- Turing review is required for non-trivial implementation.
+- GitHub Actions CI must pass when GitHub is involved.
+
+See [AGENTS.md](./AGENTS.md) for the full agent-facing policy.
+
+---
+
 ## CI
 
 GitHub Actions workflow at `.github/workflows/ci.yml` runs lint + build on push/PR to `main`.
-Requires repo to be pushed to GitHub (Anthony approval required before push).
+Branch protection on `main` requires PR review and the `build` status check before normal development merges.
 
 ---
 
