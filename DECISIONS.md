@@ -37,7 +37,8 @@ Scrub the Canvas iCal URL from all git history using `git-filter-repo` before an
 ### Consequences
 
 - Commit hashes changed for all 14 commits (expected and acceptable — no remote exists)
-- Canvas iCal feed URL rotation recommended as hygiene (see SECURITY_CHECKLIST.md)
+- Canvas iCal feed URL rotation is **not available** — Canvas provides no practical rotation path. Anthony accepted residual risk on 2026-05-01: the feed exposes calendar/assignment timing only (not a password or API key); history was never pushed remotely. This does not block Phase 6.
+- **Backup sensitivity:** `mission-control-backup-pre-filter-20260501` preserves original unmodified history and must not be pushed or shared.
 - **Next required actions (Anthony approval needed):**
   - GitHub remote creation (`gh repo create` or `git remote add`)
   - First push to GitHub
