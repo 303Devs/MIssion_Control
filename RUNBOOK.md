@@ -92,11 +92,13 @@ Authorization: Bearer mysecret
 
 ---
 
-## Lint + Type Check
+## Lint, Test + Type Check
 
 ```bash
 npm run lint      # ESLint
+npm test          # Vitest unit/component/API tests
 npm run build     # Includes TypeScript compile (tsc)
+npm run test:e2e  # Local Playwright smoke tests; not CI-blocking yet
 ```
 
 ---
@@ -113,11 +115,13 @@ Normal development must follow the standing engineering policy:
 
 ```bash
 npm run lint
+npm test
 npm run build
+npm run test:e2e  # local smoke gate before Turing when stable
 ```
 
 6. Route non-trivial implementation to Turing for review.
-7. Do not mark complete until local checks pass and GitHub Actions CI is green when GitHub is involved.
+7. Do not mark complete until local lint/test/build pass, smoke status is recorded, and GitHub Actions CI is green when GitHub is involved.
 
 ---
 
@@ -149,4 +153,5 @@ PORT=3001 npm start
 rm -rf node_modules .next
 npm install
 npm run build
+npm run test:e2e  # local smoke gate before Turing when stable
 ```
