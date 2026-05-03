@@ -63,15 +63,17 @@ function CalendarPageContent() {
   const [calEvents, setCalEvents] = useState<CalEvent[]>([]);
   const [canvasEvents, setCanvasEvents] = useState<CanvasEvent[]>([]);
   const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
+  const [calendarError, setCalendarError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      fetch("/api/calendar").then((r) => r.json()).catch(() => ({ events: [] })),
+      fetch("/api/calendar").then((r) => r.json()).catch(() => ({ events: [], error: "Calendar API unavailable" })),
       fetch("/api/canvas").then((r) => r.json()).catch(() => ({ events: [] })),
       fetch("/api/cron").then((r) => r.json()).catch(() => ({ jobs: [] })),
     ]).then(([cal, canvas, cron]) => {
       setCalEvents(cal.events || []);
+      setCalendarError(cal.error || null);
       setCanvasEvents(canvas.events || []);
       setCronJobs(cron.jobs || []);
       setLoading(false);
@@ -198,6 +200,13 @@ function CalendarPageContent() {
       </div>
 
       <div className="text-base font-semibold text-white mb-4">{headerLabel}</div>
+
+      {calendarError && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          <div className="font-semibold text-red-100">Calendar unavailable — calctl not found</div>
+          <div className="mt-1 text-xs text-red-200/80">Personal calendar events could not be loaded. School deadlines and cron jobs may still appear.</div>
+        </div>
+      )}
 
       {loading ? (
         <div className="flex-1 bg-gray-900 border border-gray-800 rounded-xl animate-pulse" />

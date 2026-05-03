@@ -113,9 +113,10 @@ function PipelinePageContent() {
             })}
 
             {!stages.length && (
-              <div className="flex min-h-[18rem] flex-col items-center justify-center rounded-3xl border border-dashed border-gray-800 bg-gray-900/50 text-center">
+              <div className="flex min-h-[18rem] flex-col items-center justify-center rounded-3xl border border-dashed border-gray-800 bg-gray-900/50 px-6 text-center">
                 <Workflow className="mb-4 h-10 w-10 text-gray-600" />
-                <p className="text-sm text-gray-400">No pipeline stages could be parsed from `ORG.md`.</p>
+                <p className="text-base font-semibold text-white">No pipeline configured</p>
+                <p className="mt-2 text-sm text-gray-400">No pipeline stages defined. Add a `## The Pipeline` section to ORG.md to configure stages.</p>
               </div>
             )}
           </div>
