@@ -3,8 +3,8 @@
 ## 2026-05-01 — Phase 6 Complete ✅
 
 ### 303-22 — Git History Scrub (Done)
-- Canvas iCal URL scrubbed from all 14 original commits via git-filter-repo
-- Full repo backup at `mission-control-backup-pre-filter-20260501` (sensitive — do not push)
+- Canvas iCal URL scrubbed from git history via git-filter-repo before remote publication
+- Private pre-scrub local backups must not be pushed or shared
 - iCal rotation not available; risk accepted by Anthony
 
 ### Phase 6 — GitHub Setup (Done)
