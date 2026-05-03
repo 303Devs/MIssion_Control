@@ -1,5 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const smokePort = 3100;
+const smokeHost = "127.0.0.1";
+const smokeBaseUrl = `http://${smokeHost}:${smokePort}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 30_000,
@@ -8,7 +12,7 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3000",
+    baseURL: smokeBaseUrl,
     trace: "retain-on-failure",
   },
   projects: [
@@ -18,9 +22,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3000",
-    url: "http://127.0.0.1:3000",
-    reuseExistingServer: !process.env.CI,
+    command: `npm run dev -- --hostname ${smokeHost} --port ${smokePort}`,
+    url: smokeBaseUrl,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });
