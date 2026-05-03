@@ -56,9 +56,12 @@ See [RUNBOOK.md](./RUNBOOK.md) for full local staging instructions, auth setup, 
 
 ```bash
 npm run dev      # Development server (hot reload)
-npm run build    # Production build (TypeScript + Next.js)
-npm start        # Start production server (requires build)
 npm run lint     # ESLint
+npm test         # Vitest unit/component/API tests
+npm run build    # Production build (TypeScript + Next.js)
+npm run test:e2e # Local Playwright smoke tests (not CI-blocking yet)
+npm run test:all # Local full gate: lint + test + build + smoke
+npm start        # Start production server (requires build)
 ```
 
 ---
@@ -92,7 +95,8 @@ See [AGENTS.md](./AGENTS.md) for the full agent-facing policy.
 
 ## CI
 
-GitHub Actions workflow at `.github/workflows/ci.yml` runs lint + build on push/PR to `main`.
+GitHub Actions workflow at `.github/workflows/ci.yml` runs `npm ci`, lint, Vitest unit/component/API tests, and build on push/PR to `main`.
+Playwright smoke tests are available locally with `npm run test:e2e`; they are intentionally not CI-blocking until they stay stable across local runs.
 Branch protection on `main` requires PR review and the `build` status check before normal development merges.
 
 ---
