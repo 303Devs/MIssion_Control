@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useState, type ErrorInfo, type ReactNode } from "react";
 import { Plus, RefreshCw, Trash2, X } from "lucide-react";
 
 interface Task {
@@ -12,6 +12,9 @@ interface Task {
   project?: string;
   assignee?: string;
   tags?: string[];
+  source?: string;
+  persisted?: boolean;
+  origin?: "user-created" | "derived" | "imported";
   createdAt: string;
   updatedAt: string;
 }
@@ -97,6 +100,17 @@ function TaskCard({
         )}
         {task.assignee && (
           <span className="text-xs text-emerald-400 ml-auto">{task.assignee}</span>
+        )}
+      </div>
+      <div className="mt-2">
+        {task.persisted === false || task.origin === "derived" ? (
+          <span className="text-[11px] text-purple-300 bg-purple-500/10 border border-purple-500/20 rounded px-1.5 py-0.5">
+            Derived from {task.source || "external source"}
+          </span>
+        ) : (
+          <span className="text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded px-1.5 py-0.5">
+            Persisted task record
+          </span>
         )}
       </div>
       {/* Quick status change */}
@@ -224,26 +238,48 @@ function TasksContent() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [addingTo, setAddingTo] = useState<Task["status"] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const fetchTaskRecords = useCallback(async () => {
+    const res = await fetch("/api/tasks");
+    if (!res.ok) throw new Error("Tasks could not be loaded");
+    const d = await res.json();
+    return d.tasks || [];
+  }, []);
 
   const loadTasks = async () => {
     setRefreshing(true);
-    const res = await fetch("/api/tasks");
-    const d = await res.json();
-    setTasks(d.tasks || []);
-    setLoading(false);
-    setRefreshing(false);
+    try {
+      setTasks(await fetchTaskRecords());
+      setLoadError(null);
+    } catch (err) {
+      setTasks([]);
+      setLoadError(err instanceof Error ? err.message : "Tasks could not be loaded");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
     let cancelled = false;
 
     const initialLoad = async () => {
-      const res = await fetch("/api/tasks");
-      const d = await res.json();
-      if (cancelled) return;
-      setTasks(d.tasks || []);
-      setLoading(false);
-      setRefreshing(false);
+      try {
+        const loadedTasks = await fetchTaskRecords();
+        if (cancelled) return;
+        setTasks(loadedTasks);
+        setLoadError(null);
+      } catch (err) {
+        if (cancelled) return;
+        setTasks([]);
+        setLoadError(err instanceof Error ? err.message : "Tasks could not be loaded");
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setRefreshing(false);
+        }
+      }
     };
 
     void initialLoad();
@@ -251,7 +287,7 @@ function TasksContent() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [fetchTaskRecords]);
 
   const handleAdd = async (partial: Partial<Task>) => {
     const res = await fetch("/api/tasks", {
@@ -259,7 +295,8 @@ function TasksContent() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(partial),
     });
-    const newTask = await res.json();
+    const body = await res.json();
+    const newTask = body.task || body;
     setTasks((prev) => [...prev, newTask]);
   };
 
@@ -317,6 +354,13 @@ function TasksContent() {
           </button>
         </div>
       </div>
+
+      {loadError && (
+        <div className="mb-4 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-200">
+          <p className="font-semibold">Task board load error</p>
+          <p className="text-xs text-red-200/80 mt-1">Tasks could not be loaded. No task records are being shown.</p>
+        </div>
+      )}
 
       <div className="grid grid-cols-4 gap-4 flex-1 overflow-hidden">
         {COLUMNS.map((col) => {

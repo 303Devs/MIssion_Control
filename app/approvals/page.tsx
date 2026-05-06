@@ -30,6 +30,7 @@ function ApprovalsPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("pending");
   const [resolving, setResolving] = useState<string | null>(null);
+  const [resolutionMessage, setResolutionMessage] = useState<string | null>(null);
 
   const fetchApprovals = useCallback(async () => {
     try {
@@ -50,15 +51,35 @@ function ApprovalsPageContent() {
 
   async function resolve(id: string, status: "approved" | "rejected") {
     setResolving(id);
+    setResolutionMessage(null);
+    setError(null);
     try {
-      await fetch("/api/approvals", {
+      const response = await fetch("/api/approvals", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
+
+      const data = (await response.json().catch(() => ({}))) as { approval?: ApprovalRequest; error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || "Approval resolution failed");
+      }
+
+      const existingApproval = approvals.find((a) => a.id === id);
+      const resolvedApproval = data.approval || (existingApproval
+        ? { ...existingApproval, status, resolvedAt: Date.now() }
+        : undefined);
+      if (!resolvedApproval) {
+        throw new Error("Approval response missing resolved record");
+      }
+
       setApprovals((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status, resolvedAt: Date.now() } : a))
+        prev.map((a) => (a.id === id ? resolvedApproval : a))
       );
+      setResolutionMessage(`Approval record ${status}`);
+    } catch (err) {
+      setError(`Approval resolution failed: ${err instanceof Error ? err.message : "unknown error"}`);
+      setResolutionMessage(null);
     } finally {
       setResolving(null);
     }
@@ -102,6 +123,12 @@ function ApprovalsPageContent() {
         </div>
       )}
 
+      {resolutionMessage && (
+        <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm text-emerald-400">
+          {resolutionMessage}
+        </div>
+      )}
+
       <div className="flex gap-1 mb-5 p-1 bg-gray-900 border border-gray-800 rounded-lg w-fit">
         {(["pending", "all", "resolved"] as Filter[]).map((f) => (
           <button
@@ -129,7 +156,7 @@ function ApprovalsPageContent() {
             {filter === "pending" ? "No pending approvals" : "Nothing here yet"}
           </p>
           <p className="text-gray-600 text-sm mt-1">
-            {filter === "pending" ? "Agents are running autonomously." : ""}
+            {filter === "pending" ? "No approval records match this filter." : "No approval records match this filter."}
           </p>
         </div>
       ) : (
@@ -150,7 +177,12 @@ function ApprovalsPageContent() {
                     <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${RISK_STYLES[approval.risk || "low"]}`}>
                       {approval.risk || "low"} risk
                     </span>
-                    {approval.status !== "pending" && (
+                    {approval.status === "pending" ? (
+                      <span className="flex items-center gap-1 text-xs font-medium text-yellow-400">
+                        <Clock className="w-3.5 h-3.5" />
+                        Pending approval record
+                      </span>
+                    ) : (
                       <span className={`flex items-center gap-1 text-xs font-medium ${approval.status === "approved" ? "text-emerald-400" : "text-red-400"}`}>
                         {approval.status === "approved"
                           ? <CheckCircle className="w-3.5 h-3.5" />

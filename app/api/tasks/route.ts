@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 
 const TASKS_FILE = path.join(process.cwd(), "data", "tasks.json");
 const GILFOYLE_TODO = path.join(OPENCLAW_WORKSPACE, "gilfoyle-todo.md");
+const ALLOWED_STATUSES = ["backlog", "in-progress", "review", "done"] as const;
+const ALLOWED_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 
 interface Task {
   id: string;
@@ -18,6 +20,8 @@ interface Task {
   assignee?: string;
   tags?: string[];
   source?: string;
+  persisted?: boolean;
+  origin?: "user-created" | "derived" | "imported";
   createdAt: string;
   updatedAt: string;
 }
@@ -80,6 +84,8 @@ function parseGilfoyleTodo(): Task[] {
             assignee: "Gilfoyle",
             tags: ["gilfoyle-todo"],
             source: "gilfoyle-todo.md",
+            persisted: false,
+            origin: "derived",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
@@ -102,6 +108,8 @@ function parseGilfoyleTodo(): Task[] {
             assignee: "Gilfoyle",
             tags: ["gilfoyle-todo"],
             source: "gilfoyle-todo.md",
+            persisted: false,
+            origin: "derived",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
@@ -124,7 +132,14 @@ export async function GET() {
     const gilfoyleIds = new Set(gilfoyleTasks.map((t) => t.id));
     const staticOnly = staticData.tasks.filter((t) => !gilfoyleIds.has(t.id) && t.source !== "gilfoyle-todo.md");
 
-    const merged = [...gilfoyleTasks, ...staticOnly];
+    const persistedTasks = staticOnly.map((task) => ({
+      ...task,
+      source: task.source || "mission-control-task-record",
+      persisted: task.persisted ?? true,
+      origin: task.origin || "user-created",
+    }));
+
+    const merged = [...gilfoyleTasks, ...persistedTasks];
     return NextResponse.json({ tasks: merged });
   } catch {
     return NextResponse.json({ tasks: [] });
@@ -134,16 +149,39 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    if (body.title === undefined) {
+      return NextResponse.json({ error: "title is required" }, { status: 400 });
+    }
+    if (typeof body.title !== "string") {
+      return NextResponse.json({ error: "title must be a string" }, { status: 400 });
+    }
+    const title = body.title.trim();
+    if (!title) {
+      return NextResponse.json({ error: "title must be non-empty after trim" }, { status: 400 });
+    }
+    if (body.status !== undefined && !ALLOWED_STATUSES.includes(body.status)) {
+      return NextResponse.json({ error: "status must be one of: backlog, in-progress, review, done" }, { status: 400 });
+    }
+    if (body.priority !== undefined && !ALLOWED_PRIORITIES.includes(body.priority)) {
+      return NextResponse.json({ error: "priority must be one of: low, medium, high, critical" }, { status: 400 });
+    }
+
     const data = readTasks();
     const newTask: Task = {
       id: `task-${Date.now()}`,
       ...body,
+      title,
+      status: body.status || "backlog",
+      priority: body.priority || "medium",
+      source: "mission-control-task-record",
+      persisted: true,
+      origin: "user-created",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     data.tasks.push(newTask);
     writeTasks(data);
-    return NextResponse.json(newTask, { status: 201 });
+    return NextResponse.json({ ...newTask, task: newTask, persisted: true }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }
