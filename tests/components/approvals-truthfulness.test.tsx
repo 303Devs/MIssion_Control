@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import ApprovalsPage from "@/app/approvals/page";
 
@@ -40,5 +40,39 @@ describe("Approvals truthfulness", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /approve/i }));
     expect(await screen.findByText("Approval record approved")).toBeInTheDocument();
+  });
+
+  it("does not show success or mutate local approval state when approval resolution fails", async () => {
+    const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      if (String(input) === "/api/approvals" && init?.method === "PUT") {
+        return Response.json({ error: "write failed" }, { status: 500 });
+      }
+      return Response.json({
+        approvals: [{
+          id: "approval-fail",
+          timestamp: 1778050800000,
+          agentId: "gilfoyle",
+          agentName: "Gilfoyle",
+          action: "Risky command",
+          description: "Needs human sign-off",
+          risk: "high",
+          status: "pending",
+        }],
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    render(<ApprovalsPage />);
+
+    expect(await screen.findByText("Risky command")).toBeInTheDocument();
+    expect(screen.getByText("Pending approval record")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /approve/i }));
+
+    expect(await screen.findByText("Approval resolution failed: write failed")).toBeInTheDocument();
+    expect(screen.queryByText("Approval record approved")).not.toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Pending approval record")).toBeInTheDocument();
+    });
   });
 });

@@ -52,6 +52,28 @@ describe("tasks API route", () => {
     ]);
   });
 
+  it.each([
+    [{}, "title is required"],
+    [{ title: 123 }, "title must be a string"],
+    [{ title: "   " }, "title must be non-empty after trim"],
+    [{ title: "New task", status: "blocked" }, "status must be one of: backlog, in-progress, review, done"],
+    [{ title: "New task", priority: "urgent" }, "priority must be one of: low, medium, high, critical"],
+  ])("rejects invalid task creation payloads", async (payload, error) => {
+    const projectRoot = makeTempDir("mc-project-");
+    const workspaceRoot = path.join(makeTempDir("mc-openclaw-"), "workspace");
+    writeFile(path.join(projectRoot, "data", "tasks.json"), JSON.stringify({ tasks: [] }));
+    const route = await loadTasksRoute(projectRoot, workspaceRoot);
+
+    const response = await route.POST(new NextRequest("http://localhost/api/tasks", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error });
+    expect(JSON.parse(fs.readFileSync(path.join(projectRoot, "data", "tasks.json"), "utf-8"))).toEqual({ tasks: [] });
+  });
+
   it("creates, updates, and deletes persisted tasks", async () => {
     const projectRoot = makeTempDir("mc-project-");
     const workspaceRoot = path.join(makeTempDir("mc-openclaw-"), "workspace");

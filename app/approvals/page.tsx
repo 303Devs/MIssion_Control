@@ -51,16 +51,35 @@ function ApprovalsPageContent() {
 
   async function resolve(id: string, status: "approved" | "rejected") {
     setResolving(id);
+    setResolutionMessage(null);
+    setError(null);
     try {
-      await fetch("/api/approvals", {
+      const response = await fetch("/api/approvals", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, status }),
       });
+
+      const data = (await response.json().catch(() => ({}))) as { approval?: ApprovalRequest; error?: string };
+      if (!response.ok) {
+        throw new Error(data.error || "Approval resolution failed");
+      }
+
+      const existingApproval = approvals.find((a) => a.id === id);
+      const resolvedApproval = data.approval || (existingApproval
+        ? { ...existingApproval, status, resolvedAt: Date.now() }
+        : undefined);
+      if (!resolvedApproval) {
+        throw new Error("Approval response missing resolved record");
+      }
+
       setApprovals((prev) =>
-        prev.map((a) => (a.id === id ? { ...a, status, resolvedAt: Date.now() } : a))
+        prev.map((a) => (a.id === id ? resolvedApproval : a))
       );
       setResolutionMessage(`Approval record ${status}`);
+    } catch (err) {
+      setError(`Approval resolution failed: ${err instanceof Error ? err.message : "unknown error"}`);
+      setResolutionMessage(null);
     } finally {
       setResolving(null);
     }

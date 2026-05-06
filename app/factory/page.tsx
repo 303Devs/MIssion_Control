@@ -20,6 +20,8 @@ interface Task {
   priority: string;
   assignee?: string;
   project?: string;
+  persisted?: boolean;
+  origin?: "user-created" | "derived" | "imported";
   createdAt: string;
 }
 
@@ -67,9 +69,11 @@ function FactoryPageContent() {
       const tasksData = (await tasksRes.json()) as { tasks: Task[] };
       setAgents(agentsData.agents || []);
       setError(null);
-      // Show most recent 10 tasks
+      // Show only verifiable persisted user-created task records here. Derived/imported
+      // tasks may appear on the task board, but they are not Factory-created records.
       setRecentTasks(
         (tasksData.tasks || [])
+          .filter((task) => task.persisted === true && task.origin === "user-created")
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
           .slice(0, 10)
       );

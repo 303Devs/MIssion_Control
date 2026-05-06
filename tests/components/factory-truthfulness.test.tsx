@@ -5,6 +5,56 @@ import FactoryPage from "@/app/factory/page";
 const forbiddenImpliedExecutionCopy = /dispatch(?:ed|ing)?|execut(?:e|ed|ing|ion)|running/i;
 
 describe("Factory truthfulness", () => {
+  it("shows only persisted user-created records in the recent task records list", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url === "/api/agents") {
+        return Response.json({ agents: [] });
+      }
+      if (url === "/api/tasks") {
+        return Response.json({
+          tasks: [
+            {
+              id: "derived-1",
+              title: "Imported markdown task",
+              status: "backlog",
+              priority: "medium",
+              source: "gilfoyle-todo.md",
+              persisted: false,
+              origin: "derived",
+              createdAt: "2026-05-06T06:31:00.000Z",
+            },
+            {
+              id: "imported-1",
+              title: "Imported persisted task",
+              status: "backlog",
+              priority: "medium",
+              persisted: true,
+              origin: "imported",
+              createdAt: "2026-05-06T06:32:00.000Z",
+            },
+            {
+              id: "persisted-1",
+              title: "Persisted user task",
+              status: "backlog",
+              priority: "high",
+              persisted: true,
+              origin: "user-created",
+              createdAt: "2026-05-06T06:30:00.000Z",
+            },
+          ],
+        });
+      }
+      throw new Error(`Unhandled fetch: ${url}`);
+    }));
+
+    render(<FactoryPage />);
+
+    expect(await screen.findByText("Persisted user task")).toBeInTheDocument();
+    expect(screen.queryByText("Imported markdown task")).not.toBeInTheDocument();
+    expect(screen.queryByText("Imported persisted task")).not.toBeInTheDocument();
+  });
+
   it("creates a persisted task record and uses record-creation copy, not implied execution copy", async () => {
     const createdTask = {
       id: "task-verified-1",

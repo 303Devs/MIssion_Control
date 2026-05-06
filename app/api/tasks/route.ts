@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 
 const TASKS_FILE = path.join(process.cwd(), "data", "tasks.json");
 const GILFOYLE_TODO = path.join(OPENCLAW_WORKSPACE, "gilfoyle-todo.md");
+const ALLOWED_STATUSES = ["backlog", "in-progress", "review", "done"] as const;
+const ALLOWED_PRIORITIES = ["low", "medium", "high", "critical"] as const;
 
 interface Task {
   id: string;
@@ -147,10 +149,28 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    if (body.title === undefined) {
+      return NextResponse.json({ error: "title is required" }, { status: 400 });
+    }
+    if (typeof body.title !== "string") {
+      return NextResponse.json({ error: "title must be a string" }, { status: 400 });
+    }
+    const title = body.title.trim();
+    if (!title) {
+      return NextResponse.json({ error: "title must be non-empty after trim" }, { status: 400 });
+    }
+    if (body.status !== undefined && !ALLOWED_STATUSES.includes(body.status)) {
+      return NextResponse.json({ error: "status must be one of: backlog, in-progress, review, done" }, { status: 400 });
+    }
+    if (body.priority !== undefined && !ALLOWED_PRIORITIES.includes(body.priority)) {
+      return NextResponse.json({ error: "priority must be one of: low, medium, high, critical" }, { status: 400 });
+    }
+
     const data = readTasks();
     const newTask: Task = {
       id: `task-${Date.now()}`,
       ...body,
+      title,
       status: body.status || "backlog",
       priority: body.priority || "medium",
       source: "mission-control-task-record",

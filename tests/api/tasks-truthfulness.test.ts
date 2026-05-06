@@ -57,6 +57,47 @@ describe("tasks API truthfulness semantics", () => {
     ]);
   });
 
+  it("POST rejects an empty title without persisting a task", async () => {
+    const projectRoot = makeTempDir("mc-project-");
+    const workspaceRoot = path.join(makeTempDir("mc-openclaw-"), "workspace");
+    writeFile(path.join(projectRoot, "data", "tasks.json"), JSON.stringify({ tasks: [] }));
+    const route = await loadTasksRoute(projectRoot, workspaceRoot);
+
+    const response = await route.POST(new NextRequest("http://localhost/api/tasks", {
+      method: "POST",
+      body: JSON.stringify({ title: "   ", priority: "medium" }),
+    }));
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "title must be non-empty after trim" });
+    const persisted = JSON.parse(fs.readFileSync(path.join(projectRoot, "data", "tasks.json"), "utf-8"));
+    expect(persisted.tasks).toEqual([]);
+  });
+
+  it("POST rejects invalid status and priority values", async () => {
+    const projectRoot = makeTempDir("mc-project-");
+    const workspaceRoot = path.join(makeTempDir("mc-openclaw-"), "workspace");
+    writeFile(path.join(projectRoot, "data", "tasks.json"), JSON.stringify({ tasks: [] }));
+    const route = await loadTasksRoute(projectRoot, workspaceRoot);
+
+    const badStatus = await route.POST(new NextRequest("http://localhost/api/tasks", {
+      method: "POST",
+      body: JSON.stringify({ title: "Invalid", status: "running" }),
+    }));
+    expect(badStatus.status).toBe(400);
+    await expect(badStatus.json()).resolves.toEqual({ error: "status must be one of: backlog, in-progress, review, done" });
+
+    const badPriority = await route.POST(new NextRequest("http://localhost/api/tasks", {
+      method: "POST",
+      body: JSON.stringify({ title: "Invalid", priority: "urgent" }),
+    }));
+    expect(badPriority.status).toBe(400);
+    await expect(badPriority.json()).resolves.toEqual({ error: "priority must be one of: low, medium, high, critical" });
+
+    const persistedAfterInvalidPayloads = JSON.parse(fs.readFileSync(path.join(projectRoot, "data", "tasks.json"), "utf-8"));
+    expect(persistedAfterInvalidPayloads.tasks).toEqual([]);
+  });
+
   it("GET marks imported todo tasks as derived, non-persisted records", async () => {
     const projectRoot = makeTempDir("mc-project-");
     const workspaceRoot = path.join(makeTempDir("mc-openclaw-"), "workspace");
