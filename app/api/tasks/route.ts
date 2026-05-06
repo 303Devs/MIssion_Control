@@ -18,6 +18,8 @@ interface Task {
   assignee?: string;
   tags?: string[];
   source?: string;
+  persisted?: boolean;
+  origin?: "user-created" | "derived" | "imported";
   createdAt: string;
   updatedAt: string;
 }
@@ -80,6 +82,8 @@ function parseGilfoyleTodo(): Task[] {
             assignee: "Gilfoyle",
             tags: ["gilfoyle-todo"],
             source: "gilfoyle-todo.md",
+            persisted: false,
+            origin: "derived",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
@@ -102,6 +106,8 @@ function parseGilfoyleTodo(): Task[] {
             assignee: "Gilfoyle",
             tags: ["gilfoyle-todo"],
             source: "gilfoyle-todo.md",
+            persisted: false,
+            origin: "derived",
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
@@ -124,7 +130,14 @@ export async function GET() {
     const gilfoyleIds = new Set(gilfoyleTasks.map((t) => t.id));
     const staticOnly = staticData.tasks.filter((t) => !gilfoyleIds.has(t.id) && t.source !== "gilfoyle-todo.md");
 
-    const merged = [...gilfoyleTasks, ...staticOnly];
+    const persistedTasks = staticOnly.map((task) => ({
+      ...task,
+      source: task.source || "mission-control-task-record",
+      persisted: task.persisted ?? true,
+      origin: task.origin || "user-created",
+    }));
+
+    const merged = [...gilfoyleTasks, ...persistedTasks];
     return NextResponse.json({ tasks: merged });
   } catch {
     return NextResponse.json({ tasks: [] });
@@ -138,12 +151,17 @@ export async function POST(req: NextRequest) {
     const newTask: Task = {
       id: `task-${Date.now()}`,
       ...body,
+      status: body.status || "backlog",
+      priority: body.priority || "medium",
+      source: "mission-control-task-record",
+      persisted: true,
+      origin: "user-created",
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
     data.tasks.push(newTask);
     writeTasks(data);
-    return NextResponse.json(newTask, { status: 201 });
+    return NextResponse.json({ ...newTask, task: newTask, persisted: true }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 });
   }

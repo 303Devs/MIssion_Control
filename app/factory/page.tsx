@@ -108,12 +108,23 @@ function FactoryPageContent() {
         }),
       });
 
-      if (res.ok) {
-        setSuccess(true);
-        setForm({ title: "", description: "", priority: "medium", assignee: "", project: "", tags: "" });
-        setTimeout(() => setSuccess(false), 3000);
-        void fetchData();
+      if (!res.ok) {
+        throw new Error("Task record creation failed");
       }
+
+      const result = await res.json();
+      if (!result.persisted || !result.task?.id) {
+        throw new Error("Task record was not verified as persisted");
+      }
+
+      setSuccess(true);
+      setError(null);
+      setForm({ title: "", description: "", priority: "medium", assignee: "", project: "", tags: "" });
+      setTimeout(() => setSuccess(false), 3000);
+      void fetchData();
+    } catch (err) {
+      setSuccess(false);
+      setError(err instanceof Error ? err.message : "Task record creation failed");
     } finally {
       setDispatching(false);
     }
@@ -129,7 +140,7 @@ function FactoryPageContent() {
             <Zap className="w-5 h-5 text-emerald-400" />
             Task Factory
           </h1>
-          <p className="text-sm text-gray-500 mt-0.5">Create and dispatch tasks to the agent workforce</p>
+          <p className="text-sm text-gray-500 mt-0.5">Create persisted task records for the agent workforce</p>
         </div>
         <button onClick={fetchData} className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 border border-gray-700 rounded-lg hover:bg-gray-800 transition-colors">
           <RefreshCw className="w-3.5 h-3.5" />
@@ -144,7 +155,7 @@ function FactoryPageContent() {
       )}
 
       <div className="grid grid-cols-3 gap-6">
-        {/* Dispatch form */}
+        {/* Task record form */}
         <div className="col-span-2">
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-5">
             <h2 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
@@ -155,7 +166,7 @@ function FactoryPageContent() {
             {success && (
               <div className="flex items-center gap-2 p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg mb-4 text-sm text-emerald-400">
                 <CheckCircle className="w-4 h-4" />
-                Task dispatched successfully
+                Task record created successfully
               </div>
             )}
 
@@ -240,7 +251,7 @@ function FactoryPageContent() {
                   className="flex items-center gap-2 px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
-                  {dispatching ? "Dispatching..." : "Dispatch Task"}
+                  {dispatching ? "Creating record..." : "Create Task Record"}
                 </button>
               </div>
             </form>
@@ -248,7 +259,7 @@ function FactoryPageContent() {
 
           {/* Recent tasks */}
           <div className="mt-5 bg-gray-900 border border-gray-800 rounded-xl p-5">
-            <h2 className="text-sm font-semibold text-white mb-3">Recently Dispatched</h2>
+            <h2 className="text-sm font-semibold text-white mb-3">Recent Task Records</h2>
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
