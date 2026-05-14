@@ -398,7 +398,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const sidebarQuery = searchOpen ? searchQuery : "";
 
   return (
-    <body className="flex h-screen overflow-hidden bg-gray-950 text-gray-100 antialiased">
+    <div className="flex h-screen overflow-hidden bg-gray-950 text-gray-100 antialiased">
       <Sidebar searchQuery={sidebarQuery} />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <TopBar
@@ -430,6 +430,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         }}
         onQueryChange={setSearchQuery}
       />
-    </body>
+    </div>
   );
 }
